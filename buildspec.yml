@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - npm install -g aws-sam-cli
+      - npm install
+
+  pre_build:
+    commands:
+      - echo "Running pre-build scripts"
+
+  build:
+    commands:
+      - sam build
+
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+
+artifacts:
+  files:
+    - template.yaml
+    - .aws-sam/**
+    - src/**
+    - package.json
+    - package-lock.json
