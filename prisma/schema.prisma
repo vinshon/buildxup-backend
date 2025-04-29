@@ -1,16 +1,30 @@
-model User {
-  id             Int     @id @default(autoincrement())
-  name           String
-  email          String? @unique
-  phone          String  @unique
-  profile        String?
-  token          String?
-  refresh_token  String?
-  password       String
-  verify_otp     String?
-  is_active      Boolean @default(true)
-  is_block       Boolean @default(false)
-  status         String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id              String   @id @default(uuid())
+  name            String
+  email           String?  @unique
+  phone           String   @unique
+  profile         String?
+  token           String?
+  refresh_token   String?
+  verify_otp      String?
+  role            String   @default("user")
+  is_active       Boolean  @default(true)
+  is_block        Boolean  @default(false)
+  status          String?
+  user_preference Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

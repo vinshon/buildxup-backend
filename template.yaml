@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BuildXup Backend API
+
+Globals:
+  Function:
+    # Timeout: 60
+    # MemorySize: 1024
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        NODE_ENV: !Ref NodeEnv
+        DB_HOST: !Ref DBHost
+        DB_NAME: !Ref DBName
+        DB_USER: !Ref DBUser
+        DB_PASSWORD: !Ref DBPassword
+        DB_PORT: !Ref DBPort
+        JWT_SECRET: !Ref JWTSecret
+        DATABASE_URL: !Sub "postgresql://${DBUser}:${DBPassword}@${DBHost}:${DBPort}/${DBName}?schema=public"
+
+Parameters:
+  NodeEnv:
+    Type: String
+    Default: development
+    AllowedValues:
+      - development
+      - production
+  DBHost:
+    Type: String
+    Default: host.docker.internal
+  DBName:
+    Type: String
+    Default: buildxup
+  DBUser:
+    Type: String
+    Default: postgres
+  DBPassword:
+    Type: String
+    Default: postgres
+  DBPort:
+    Type: String
+    Default: '5432'
+  JWTSecret:
+    Type: String
+    Default: your_jwt_secret_key
+
+Resources:
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref NodeEnv
+      BinaryMediaTypes:
+        - "*/*"
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /server/{proxy+}
+            Method: ANY
+            RestApiId: !Ref ApiGatewayApi
+
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: module_auth/handler.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /auth/{proxy+}
+            Method: ANY
+            RestApiId: !Ref ApiGatewayApi
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${NodeEnv}/" 

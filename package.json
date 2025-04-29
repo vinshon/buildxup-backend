@@ -1,15 +1,33 @@
 {
-  "name": "buildxup",
+  "name": "buildxup-backend",
   "version": "1.0.0",
-  "main": "knexfile.js",
+  "description": "BuildXUp Backend API",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon --exec sam local start-api --port 4000",
+    "dev": "nodemon index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
+    "@prisma/client": "^6.6.0",
+    "@sendgrid/mail": "^8.1.5",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "joi": "^17.12.1",
+    "jsonwebtoken": "^9.0.2",
+    "serverless-http": "^3.2.0",
+    "twilio": "^5.5.2",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3",
     "prisma": "^6.6.0"
   }
 }
