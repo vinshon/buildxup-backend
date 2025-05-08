@@ -11,20 +11,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model temp_otp {
+  id          Int      @id @default(autoincrement())
+  email       String?  @unique
+  phone       String?  @unique
+  otp         String
+  is_verified Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime @default(dbgenerated("NOW() + INTERVAL '24 hours'"))
+
+  @@index([email])
+  @@index([phone])
+  @@index([expiresAt])
+}
+
 model user {
-  id              String   @id @default(uuid())
-  name            String
-  email           String?  @unique
-  phone           String   @unique
-  profile         String?
-  token           String?
-  refresh_token   String?
-  verify_otp      String?
-  role            String   @default("user")
-  is_active       Boolean  @default(true)
-  is_block        Boolean  @default(false)
-  status          String?
-  user_preference Json
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String         @id @default(uuid())
+  first_name        String
+  last_name         String?
+  email             String         @unique
+  phone             String?        @unique
+  profile           String?
+  token             String?
+  refresh_token     String?
+  password          String
+  verify_otp        Boolean        @default(false)
+  is_phone_verified Boolean        @default(false)
+  is_email_verified Boolean        @default(false)
+  role              String         @default("admin")
+  is_active         Boolean        @default(true)
+  is_block          Boolean        @default(false)
+  status            String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  user_preference   Json?
+  companies         user_company[] // Many-to-many relation with companies
+}
+
+model company {
+  id          String         @id @default(uuid())
+  name        String // Company name
+  description String? // Optional company description
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  users       user_company[] // Many-to-many relation with users
+}
+
+// Junction table for many-to-many relationship between users and companies
+model user_company {
+  user       user     @relation(fields: [user_id], references: [id])
+  user_id    String
+  company    company  @relation(fields: [company_id], references: [id])
+  company_id String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([user_id, company_id])
 }

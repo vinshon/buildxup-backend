@@ -44,6 +44,7 @@ app.use((req, res) => {
         register: 'POST /auth/signup',
         verifyOTP: 'POST /auth/verify-otp',
         login: 'POST /auth/verify-login',
+        tempOTP: 'POST /auth/temp-otp'
       },
       health: {
         ping: 'GET /server/ping',

@@ -2,44 +2,106 @@ const prisma = require('../../../config/prisma');
 const bcrypt = require('bcryptjs');
 const { generateToken, generateRefreshToken } = require('../../../utils/jwt');
 const { sendSMSOTP, sendEmailOTP } = require('../../../utils/twilio');
+const { responses } = require('../utils/response');
 // const logger = require('../../../utils/logger');
 
-async function signup({ name, phone, password, email = null }) {
+async function tempOTP({ email, phone }) {
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const existingUser = await prisma.user.findUnique({
+      where: phone ? { phone } : { email }
+    });
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        phone,
-        email,
-        password: hashedPassword,
-        verify_otp: otp,
-        is_active: true,
-        role: 'user'
+    if (existingUser) {
+      return responses.userAlreadyExists();
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpResult = email ?
+      await sendEmailOTP(email, otp) :
+      await sendSMSOTP(phone, otp);
+
+    if (!otpResult) {
+      return responses.otpSendFailed();
+    }
+
+    await prisma.temp_otp.upsert({
+      where: {
+        email: email || undefined,
+        phone: phone || undefined
+      },
+      update: {
+        otp,
+        is_verified: false,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      },
+      create: { email, phone, otp }
+    });
+
+    return responses.otpSent();
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function signup({ first_name, last_name, phone, password, email = null }) {
+  try {
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: phone ? { phone } : { email }
+    });
+
+    if (existingUser) {
+      return responses.userAlreadyExists();
+    }
+
+    // Check if OTP is verified
+    const verifiedOTP = await prisma.temp_otp.findFirst({
+      where: {
+        OR: [
+          { phone, is_verified: true },
+          { email, is_verified: true }
+        ]
       }
     });
 
-    let otpResult;
-    if (user?.phone) {
-      otpResult = await sendSMSOTP(user.phone, otp);
-    } else if (user?.email) {
-      otpResult = await sendEmailOTP(user.email, otp);
+    if (!verifiedOTP) {
+      return responses.unverifiedUser();
     }
 
-    if (!otpResult.success) {
-      // logger.warn(`OTP sending failed for user ${user.id}: ${otpResult.message}`);
-      return {
-        message: 'User created but OTP could not be sent. Please contact support.',
-        userId: user.id
-      };
-    }
+    const token = generateToken({ first_name, last_name, phone, email });
+    const refresh_token = generateRefreshToken({ first_name, last_name, phone, email });
 
-    return {
-      message: 'OTP sent to you successfully',
-      userId: user.id
+    // Create new user
+    const userData = {
+      first_name,
+      last_name,
+      phone,
+      email,
+      password: await bcrypt.hash(password, 10),
+      verify_otp: true,
+      is_active: true,
+      role: 'user',
+      token,
+      refresh_token,
+      is_email_verified: !!verifiedOTP.email,
+      is_phone_verified: !!verifiedOTP.phone,
     };
+
+    const newUser = await prisma.user.create({ data: userData });
+
+    // Delete temp OTP record
+    await prisma.temp_otp.delete({
+      where: {
+        email: verifiedOTP.email || undefined,
+        phone: verifiedOTP.phone || undefined
+      },
+    });
+
+    return responses.userCreated({
+      user_id: newUser.id,
+      token,
+      refresh_token
+    });
   } catch (error) {
     // logger.error('Signup failed:', error);
     throw error;
@@ -48,87 +110,45 @@ async function signup({ name, phone, password, email = null }) {
 
 async function verifyOTP({ phone, email, otp }) {
   try {
-    let user;
-
-    if (phone) {
-      user = await prisma.user.findUnique({ where: { phone } });
-    } else if (email) {
-      user = await prisma.user.findUnique({ where: { email } });
-    }
-
-    if (!user || user.verify_otp !== otp) {
-      throw new Error('Invalid OTP');
-    }
-
-    let token = generateToken({ userId: user.id });
-    let refreshToken = generateRefreshToken({ userId: user.id });
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        token,
-        refresh_token: refreshToken,
-        verify_otp: null,
-        is_active: true
-      }
+    const user = await prisma.temp_otp.findUnique({
+      where: email ? { email } : { phone }
     });
 
-    return {
-      message: 'Verification successful',
-      userId: user.id,
-      token,
-      refreshToken
-    };
+    if (!user || user.otp !== otp) {
+      return responses.invalidOTP();
+    }
+
+    await prisma.temp_otp.update({
+      where: { email: user.email },
+      data: { is_verified: true }
+    });
+
+    return responses.otpVerified();
   } catch (error) {
     // logger.error('OTP verification failed:', error);
     throw error;
   }
 }
 
-async function verifyLogin({ phone, email }) {
+async function verifyLogin({ phone, email, password }) {
   try {
-    let user;
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    if (phone) {
-      user = await prisma.user.findUnique({ where: { phone } });
-    } else if (email) {
-      user = await prisma.user.findUnique({ where: { email } });
-    }
+    const where = phone ? { phone } : { email };
+    where.verify_otp = true;
 
-    if (!user) {
-      throw new Error('User not found');
+    const user = await prisma.user.findUnique({ where });
+
+    if (!user || !await bcrypt.compare(password, user.password)) {
+      return responses.invalidCredentials();
     }
 
     if (!user.is_active) {
-      throw new Error('Account not verified');
+      return responses.accountNotVerified();
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        verify_otp: otp,
-      }
-    });
-    let otpResult;
-    if (user?.phone) {
-      otpResult = await sendSMSOTP(user.phone, otp);
-    } else if (user?.email) {
-      otpResult = await sendEmailOTP(user.email, otp);
-    }
-    if (!otpResult.success) {
-      // logger.warn(`OTP sending failed for user ${user.id}: ${otpResult.message}`);
-      return {
-        message: 'User created but OTP could not be sent. Please contact support.',
-        userId: user.id
-      };
-    }
-    return {
-      message: 'OTP sent to you successfully',
-      userId: user.id,
-    };
+    return responses.loginSuccessful({ user_id: user.id, token: user.token, refresh_token: user.refresh_token });
   } catch (error) {
     throw error;
   }
 }
 
-module.exports = { signup, verifyOTP, verifyLogin };
+module.exports = { signup, verifyOTP, verifyLogin, tempOTP };

@@ -27,6 +27,21 @@ Use `npx prisma generate`, this will initiate the schema.prisma sync with query'
 <!-- step 5: -->
 `npm run dev` for development
 
+
+<!-- Email OTP -->
+Step 1: Enable 2-Step Verification
+If you haven't already:
+
+Go to https://myaccount.google.com/security
+
+Turn on 2-Step Verification.
+
+🔑 Step 2: Create an App Password
+Go to https://myaccount.google.com/apppasswords
+
+need to add the generate app password to FROM_EMAIL_PASSWORD on env
+
+
 <! --------------------------------------END------------------------------------------! >
 
 
