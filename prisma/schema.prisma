@@ -55,16 +55,57 @@ model company {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   users       user_company[] // Many-to-many relation with users
+  projects    project[] // One-to-many relation with projects
 }
 
 // Junction table for many-to-many relationship between users and companies
 model user_company {
-  user       user     @relation(fields: [user_id], references: [id])
   user_id    String
-  company    company  @relation(fields: [company_id], references: [id])
   company_id String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  role       String    @default("admin")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       user      @relation(fields: [user_id], references: [id])
+  company    company   @relation(fields: [company_id], references: [id])
 
   @@id([user_id, company_id])
+}
+
+model project {
+  id                        String    @id @default(uuid())
+  project_name              String
+  project_location          String
+  project_vaildation_amount Decimal   @db.Decimal(10, 2)
+  project_spent_amount      Decimal   @db.Decimal(10, 2)
+  project_start_date        DateTime
+  project_end_date          DateTime
+  project_image             String?   // Optional project image field
+  created_at                DateTime  @default(now())
+  updated_at                DateTime  @updatedAt
+  deleted_at                DateTime?
+  is_deleted                Boolean   @default(false)
+
+  // Relationships
+  company_id     String
+  company        company         @relation(fields: [company_id], references: [id])
+  project_images project_image[]
+
+  @@index([company_id])
+  @@index([is_deleted])
+  @@index([created_at])
+}
+
+model project_image {
+  id         String   @id @default(uuid())
+  task_title String
+  task_date  DateTime
+  image_url  String
+  created_at DateTime @default(now())
+
+  // Relationships
+  project_id String
+  project    project @relation(fields: [project_id], references: [id])
+
+  @@index([project_id])
+  @@index([task_date])
 }

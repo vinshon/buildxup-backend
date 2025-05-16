@@ -43,8 +43,11 @@ exports.signupHandler = async (req, res) => {
       });
     }
 
-    const { first_name, last_name, phone, password, email } = req.body;
-    const result = await signup({ first_name, last_name, phone, password, email });
+    let { first_name, last_name, phone, password, email, company_name, company_description } = req.body;
+    if (!company_name || company_name.trim() === '') {
+      company_name = `${first_name}${last_name ? ' ' + last_name : ''}`;
+    }
+    const result = await signup({ first_name, last_name, phone, password, email, company_name, company_description });
     if (result.status_code === 200) {
       res.status(200).json(result);
     } else {

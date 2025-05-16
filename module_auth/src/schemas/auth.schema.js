@@ -2,9 +2,12 @@ const Joi = require('joi');
 
 const signupSchema = Joi.object({
   first_name: Joi.string().required().min(2).max(50),
+  last_name: Joi.string().min(2).max(50).allow(null, ''),
   phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).allow(null, ''),
   email: Joi.string().email().required(),
-  password: Joi.string().required().min(6).max(20)
+  password: Joi.string().required().min(6).max(20),
+  company_name: Joi.string().min(2).max(100).allow(null, ''),
+  company_description: Joi.string().allow(null, '')
 });
 
 const verifyOTPSchema = Joi.object({

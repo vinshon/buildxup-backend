@@ -43,7 +43,7 @@ async function tempOTP({ email, phone }) {
   }
 }
 
-async function signup({ first_name, last_name, phone, password, email = null }) {
+async function signup({ first_name, last_name, phone, password, email = null, company_name, company_description = null }) {
   try {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -68,26 +68,76 @@ async function signup({ first_name, last_name, phone, password, email = null }) 
       return responses.unverifiedUser();
     }
 
-    const token = generateToken({ first_name, last_name, phone, email });
-    const refresh_token = generateRefreshToken({ first_name, last_name, phone, email });
+    // Create new user and company in a transaction
+    const result = await prisma.$transaction(async (prisma) => {
+      // Create company first
+      const company = await prisma.company.create({
+        data: {
+          name: company_name,
+          description: company_description,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
 
-    // Create new user
-    const userData = {
-      first_name,
-      last_name,
-      phone,
+      // Create user with company relationship
+      const userData = {
+        first_name,
+        last_name: last_name || '', // Provide default empty string if undefined
+        phone: phone || '', // Provide default empty string if undefined
+        email,
+        password: await bcrypt.hash(password, 10),
+        verify_otp: true,
+        is_active: true,
+        role: 'admin', // First user of company is admin
+        is_email_verified: !!verifiedOTP.email,
+        is_phone_verified: !!verifiedOTP.phone,
+        companies: {
+          create: {
+            company_id: company.id
+          }
+        }
+      };
+
+      const newUser = await prisma.user.create({
+        data: userData,
+        include: {
+          companies: {
+            include: {
+              company: true
+            }
+          }
+        }
+      });
+
+      return { user: newUser, company };
+    });
+
+    // Generate tokens after transaction is complete
+    const token = generateToken({ 
+      first_name, 
+      last_name, 
+      phone, 
       email,
-      password: await bcrypt.hash(password, 10),
-      verify_otp: true,
-      is_active: true,
-      role: 'user',
-      token,
-      refresh_token,
-      is_email_verified: !!verifiedOTP.email,
-      is_phone_verified: !!verifiedOTP.phone,
-    };
+      user_id: result.user.id,
+      company_id: result.company.id,
+      role: 'admin'
+    });
+    const refresh_token = generateRefreshToken({ 
+      first_name, 
+      last_name, 
+      phone, 
+      email,
+      user_id: result.user.id,
+      company_id: result.company.id,
+      role: 'admin'
+    });
 
-    const newUser = await prisma.user.create({ data: userData });
+    // Update user with tokens
+    await prisma.user.update({
+      where: { id: result.user.id },
+      data: { token, refresh_token }
+    });
 
     // Delete temp OTP record
     await prisma.temp_otp.delete({
@@ -98,9 +148,11 @@ async function signup({ first_name, last_name, phone, password, email = null }) 
     });
 
     return responses.userCreated({
-      user_id: newUser.id,
+      user_id: result.user.id,
+      company_id: result.company.id,
       token,
-      refresh_token
+      refresh_token,
+      role: 'admin' // Include role in response
     });
   } catch (error) {
     // logger.error('Signup failed:', error);
@@ -145,7 +197,48 @@ async function verifyLogin({ phone, email, password }) {
       return responses.accountNotVerified();
     }
 
-    return responses.loginSuccessful({ user_id: user.id, token: user.token, refresh_token: user.refresh_token });
+    // Get user's company and role
+    const userCompany = await prisma.user_company.findFirst({
+      where: { user_id: user.id },
+      include: { company: true }
+    });
+
+    if (!userCompany) {
+      return responses.unauthorizedAccess();
+    }
+
+    const token = generateToken({ 
+      first_name: user.first_name, 
+      last_name: user.last_name, 
+      phone: user.phone, 
+      email: user.email,
+      user_id: user.id,
+      company_id: userCompany.company_id,
+      role: userCompany.role
+    });
+    const refresh_token = generateRefreshToken({ 
+      first_name: user.first_name, 
+      last_name: user.last_name, 
+      phone: user.phone, 
+      email: user.email,
+      user_id: user.id,
+      company_id: userCompany.company_id,
+      role: userCompany.role
+    });
+
+    // Update user's tokens
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { token, refresh_token }
+    });
+
+    return responses.loginSuccessful({ 
+      user_id: user.id, 
+      company_id: userCompany.company_id,
+      role: userCompany.role,
+      token, 
+      refresh_token 
+    });
   } catch (error) {
     throw error;
   }

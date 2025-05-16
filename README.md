@@ -25,6 +25,9 @@ TO create table use `npx prisma migrate dev --name init`,  in this project termi
 Use `npx prisma generate`, this will initiate the schema.prisma sync with query's
 
 <!-- step 5: -->
+Use `npx prisma db push`, this will push the current table changes to your database
+
+<!-- step 5: -->
 `npm run dev` for development
 
 

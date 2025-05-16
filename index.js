@@ -6,6 +6,7 @@ const { dbCheck, time } = require('./ping');
 const authRouter = require('./module_auth/src/routes/auth.route');
 const errorHandler = require('./module_auth/src/middleware/error.middleware');
 const serverless = require('serverless-http');
+const projectRouter = require('./module_project/src/routes/project.route');
 
 const app = express();
 console.log("process.env.DATABASE_URL from index.js", process.env.DATABASE_URL);
@@ -24,6 +25,10 @@ if (process.env.NODE_ENV === 'development') {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
 
 // Health check endpoints
 app.get('/server/ping', time);
@@ -31,6 +36,9 @@ app.get('/server/ping-db', dbCheck);
 
 // Auth routes
 app.use('/auth', authRouter);
+
+// Project routes
+app.use('/projects', projectRouter);
 
 // 404 handler
 app.use((req, res) => {
@@ -45,6 +53,13 @@ app.use((req, res) => {
         verifyOTP: 'POST /auth/verify-otp',
         login: 'POST /auth/verify-login',
         tempOTP: 'POST /auth/temp-otp'
+      },
+      projects: {
+        create: 'POST /projects',
+        getAll: 'GET /projects',
+        getById: 'GET /projects/:projectId',
+        update: 'PUT /projects/:projectId',
+        delete: 'DELETE /projects/:projectId',
       },
       health: {
         ping: 'GET /server/ping',
