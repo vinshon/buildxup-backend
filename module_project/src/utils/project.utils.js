@@ -59,6 +59,7 @@ const parseUpdateProjectData = (req) => {
     project_location: req.body.project_location,
     project_vaildation_amount: req.body.project_vaildation_amount ? parseFloat(req.body.project_vaildation_amount) : undefined,
     project_spent_amount: req.body.project_spent_amount ? parseFloat(req.body.project_spent_amount) : undefined,
+    project_status: req.body.project_status,
     project_start_date: req.body.project_start_date,
     project_end_date: req.body.project_end_date,
     project_image: req.file ? `/uploads/${req.file.filename}` : undefined

@@ -10,6 +10,7 @@ const {
   getProjectByIdHandler,
   updateProjectHandler,
   deleteProjectHandler,
+  getProjectOverviewHandler
 } = require("../handlers/project.handler");
 
 // Apply authentication middleware to all routes
@@ -18,6 +19,7 @@ router.use(authMiddleware);
 // Project routes
 router.post("/", upload.single('project_image'), createProjectHandler);
 router.get("/", getProjectsHandler);
+router.get("/overview", getProjectOverviewHandler);
 router.get("/:projectId", getProjectByIdHandler);
 router.put("/:projectId", upload.single('project_image'), updateProjectHandler);
 router.delete("/:projectId", deleteProjectHandler);
@@ -33,6 +35,7 @@ router.use((req, res) => {
       projects: {
         create: 'POST /projects',
         getAll: 'GET /projects',
+        getOverview: 'GET /projects/overview',
         getById: 'GET /projects/:projectId',
         update: 'PUT /projects/:projectId',
         delete: 'DELETE /projects/:projectId',

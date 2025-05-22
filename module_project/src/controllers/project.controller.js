@@ -36,6 +36,7 @@ async function createProject(data) {
       project_start_date: new Date(data.project_start_date + 'T00:00:00.000Z'),
       project_end_date: new Date(data.project_end_date + 'T23:59:59.999Z'),
       project_image: data.project_image,
+      project_status: data.project_status || 'in_progress',
       created_at: new Date(),
       updated_at: new Date(),
       is_deleted: false,
@@ -67,7 +68,7 @@ async function createProject(data) {
   }
 }
 
-async function getProjects(companyId) {
+async function getProjects(companyId, filters = {}) {
   try {
     // Verify company exists
     const company = await prisma.company.findUnique({
@@ -78,11 +79,19 @@ async function getProjects(companyId) {
       return responses.companyNotFound();
     }
 
+    // Build where clause based on filters
+    const whereClause = {
+      company_id: companyId,
+      is_deleted: false
+    };
+
+    // Add status filter if provided
+    if (filters.status) {
+      whereClause.project_status = filters.status;
+    }
+
     const projects = await prisma.project.findMany({
-      where: {
-        company_id: companyId,
-        is_deleted: false
-      },
+      where: whereClause,
       include: {
         project_images: true,
         company: true
@@ -239,10 +248,57 @@ async function softDeleteProject(projectId, companyId) {
   }
 }
 
+async function getProjectStats(companyId) {
+  try {
+    // Verify company exists
+    const company = await prisma.company.findUnique({
+      where: { id: companyId }
+    });
+
+    if (!company) {
+      return responses.companyNotFound();
+    }
+
+    // Get all non-deleted projects for the company
+    const projects = await prisma.project.findMany({
+      where: {
+        company_id: companyId,
+        is_deleted: false
+      }
+    });
+
+    // Calculate statistics
+    const stats = {
+      total_projects: projects.length,
+      total_validation_amount: projects.reduce((sum, project) =>
+        sum + Number(project.project_vaildation_amount), 0),
+      total_spent_amount: projects.reduce((sum, project) =>
+        sum + Number(project.project_spent_amount), 0),
+      status_counts: {
+        in_progress: projects.filter(p => p.project_status === 'in_progress').length,
+        pending: projects.filter(p => p.project_status === 'pending').length,
+        closed: projects.filter(p => p.project_status === 'closed').length
+      }
+    };
+
+    return {
+      success: true,
+      message: 'Project statistics retrieved successfully',
+      data: stats
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return responses.badRequest('Error retrieving project statistics');
+    }
+    throw error;
+  }
+}
+
 module.exports = {
   createProject,
   getProjects,
   getProjectById,
   updateProject,
-  softDeleteProject
+  softDeleteProject,
+  getProjectStats
 }; 

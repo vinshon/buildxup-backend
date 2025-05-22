@@ -5,6 +5,7 @@ const {
   getProjectById,
   updateProject,
   softDeleteProject,
+  getProjectStats
 } = require('../controllers/project.controller');
 const {
   handleError,
@@ -42,7 +43,12 @@ exports.getProjectsHandler = async (req, res) => {
     const auth = validateAuth(req, res);
     if (!auth) return;
 
-    const result = await getProjects(auth.company_id);
+    // Get filters from query parameters
+    const filters = {
+      status: req.query.status // This will be undefined if not provided
+    };
+
+    const result = await getProjects(auth.company_id, filters);
     res.status(result.status_code).json(result);
   } catch (error) {
     handleError(res, error, 'retrieve projects');
@@ -108,5 +114,17 @@ exports.deleteProjectHandler = async (req, res) => {
     res.status(result.status_code).json(result);
   } catch (error) {
     handleError(res, error, 'delete project');
+  }
+};
+
+exports.getProjectOverviewHandler = async (req, res) => {
+  try {
+    const auth = validateAuth(req, res);
+    if (!auth) return;
+
+    const result = await getProjectStats(auth.company_id);
+    res.status(result.status_code || 200).json(result);
+  } catch (error) {
+    handleError(res, error, 'retrieve project overview');
   }
 };
