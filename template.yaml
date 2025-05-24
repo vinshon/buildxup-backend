@@ -56,31 +56,125 @@ Resources:
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
 
-  ApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: index.handler
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /server/{proxy+}
-            Method: ANY
-            RestApiId: !Ref ApiGatewayApi
 
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ./
       Handler: module_auth/handler.handler
       Events:
-        Api:
+        Signup:
           Type: Api
           Properties:
-            Path: /auth/{proxy+}
-            Method: ANY
-            RestApiId: !Ref ApiGatewayApi
+            Path: /auth/signup
+            Method: post
+        VerifyOTP:
+          Type: Api
+          Properties:
+            Path: /auth/verify-otp
+            Method: post
+        VerifyLogin:
+          Type: Api
+          Properties:
+            Path: /auth/verify-login
+            Method: post
+        TempOTP:
+          Type: Api
+          Properties:
+            Path: /auth/temp-otp
+            Method: post
+
+
+  ProjectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: module_project/handler.handler
+      Events:
+        CreateProject:
+          Type: Api
+          Properties:
+            Path: /projects
+            Method: post
+        GetProjects:
+          Type: Api
+          Properties:
+            Path: /projects
+            Method: get
+        GetProjectById:
+          Type: Api
+          Properties:
+            Path: /projects/{projectId}
+            Method: get
+        UpdateProject:
+          Type: Api
+          Properties:
+            Path: /projects/{projectId}
+            Method: put
+        DeleteProject:
+          Type: Api
+          Properties:
+            Path: /projects/{projectId}
+            Method: delete
+        GetProjectOverview:
+          Type: Api
+          Properties:
+            Path: /projects/overview
+            Method: get
+
+
+  TaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: module_task/handler.handler
+      Events:
+        CreateTask:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: post
+        GetTasks:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: get
+        GetTaskById:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}
+            Method: get
+        UpdateTask:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}
+            Method: put
+        DeleteTask:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}
+            Method: delete
+
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: ping.handler
+      Events:
+        Ping:
+          Type: Api
+          Properties:
+            Path: /server/ping
+            Method: get
+        PingDb:
+          Type: Api
+          Properties:
+            Path: /server/ping-db
+            Method: get
+
 
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${NodeEnv}/" 
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${NodeEnv}/
