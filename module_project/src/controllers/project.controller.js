@@ -1,6 +1,7 @@
 const prisma = require('../../../config/prisma');
-const { responses } = require('../utils/response');
+const { responses } = require('../../../utils/response');
 const { Prisma } = require('@prisma/client');
+const { handlePrismaError } = require('../../../utils/data');
 
 async function createProject(data) {
   try {
@@ -33,8 +34,8 @@ async function createProject(data) {
       project_location: data.project_location,
       project_vaildation_amount: data.project_vaildation_amount,
       project_spent_amount: data.project_spent_amount,
-      project_start_date: new Date(data.project_start_date + 'T00:00:00.000Z'),
-      project_end_date: new Date(data.project_end_date + 'T23:59:59.999Z'),
+      project_start_date: data.project_start_date,
+      project_end_date: data.project_end_date,
       project_image: data.project_image,
       project_status: data.project_status || 'in_progress',
       created_at: new Date(),
@@ -166,8 +167,8 @@ async function updateProject(projectId, data, companyId) {
     // Format dates if they exist in the update data
     const updateData = {
       ...data,
-      project_start_date: data.project_start_date ? new Date(data.project_start_date + 'T00:00:00.000Z') : undefined,
-      project_end_date: data.project_end_date ? new Date(data.project_end_date + 'T23:59:59.999Z') : undefined,
+      project_start_date: data.project_start_date ? data.project_start_date : undefined,
+      project_end_date: data.project_end_date ? data.project_end_date : undefined,
       updated_at: new Date()
     };
 

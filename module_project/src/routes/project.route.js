@@ -1,8 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const logger = require("../../../utils/logger");
-const { authMiddleware } = require("../middleware/auth.middleware");
-const upload = require("../config/multer");
+const { authMiddleware } = require("../../../module_auth/src/middleware/auth.middleware");
+const upload = require("../../../config/multer");
+
+// Register authentication middleware for all project routes
+router.use(authMiddleware);
 
 const {
   createProjectHandler,
@@ -12,9 +15,6 @@ const {
   deleteProjectHandler,
   getProjectOverviewHandler
 } = require("../handlers/project.handler");
-
-// Apply authentication middleware to all routes
-router.use(authMiddleware);
 
 // Project routes
 router.post("/", upload.single('project_image'), createProjectHandler);
@@ -26,7 +26,6 @@ router.delete("/:projectId", deleteProjectHandler);
 
 // 404 handler for project routes
 router.use((req, res) => {
-  logger.warn(`Project route not found: ${req.method} ${req.path}`);
   res.status(404).json({
     status: 'error',
     message: 'Project route not found',

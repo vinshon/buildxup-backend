@@ -45,6 +45,16 @@ async function tempOTP({ email, phone }) {
 
 async function signup({ first_name, last_name, phone, password, email = null, company_name, company_description = null }) {
   try {
+    // Validate JWT secret first
+    if (!process.env.JWT_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+      return {
+        status_code: 500,
+        status: false,
+        message: 'Authentication configuration error',
+        error: 'JWT secret is not properly configured'
+      };
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: phone ? { phone } : { email }
@@ -68,7 +78,39 @@ async function signup({ first_name, last_name, phone, password, email = null, co
       return responses.unverifiedUser();
     }
 
-    // Create new user and company in a transaction
+    // Generate tokens first to ensure JWT secret is available
+    let token, refresh_token;
+    try {
+      // Test token generation with temporary data
+      token = generateToken({ 
+        first_name, 
+        last_name, 
+        phone, 
+        email,
+        user_id: 'temp',
+        company_id: 'temp',
+        role: 'admin'
+      });
+      refresh_token = generateRefreshToken({ 
+        first_name, 
+        last_name, 
+        phone, 
+        email,
+        user_id: 'temp',
+        company_id: 'temp',
+        role: 'admin'
+      });
+    } catch (error) {
+      console.error('Error generating tokens:', error);
+      return {
+        status_code: 500,
+        status: false,
+        message: 'Failed to generate authentication tokens',
+        error: 'JWT secret is not properly configured'
+      };
+    }
+
+    // Only proceed with user creation if token generation was successful
     const result = await prisma.$transaction(async (prisma) => {
       // Create company first
       const company = await prisma.company.create({
@@ -83,13 +125,13 @@ async function signup({ first_name, last_name, phone, password, email = null, co
       // Create user with company relationship
       const userData = {
         first_name,
-        last_name: last_name || '', // Provide default empty string if undefined
-        phone: phone || '', // Provide default empty string if undefined
+        last_name: last_name || '',
+        phone: phone || '',
         email,
         password: await bcrypt.hash(password, 10),
         verify_otp: true,
         is_active: true,
-        role: 'admin', // First user of company is admin
+        role: 'admin',
         is_email_verified: !!verifiedOTP.email,
         is_phone_verified: !!verifiedOTP.phone,
         companies: {
@@ -113,25 +155,40 @@ async function signup({ first_name, last_name, phone, password, email = null, co
       return { user: newUser, company };
     });
 
-    // Generate tokens after transaction is complete
-    const token = generateToken({ 
-      first_name, 
-      last_name, 
-      phone, 
-      email,
-      user_id: result.user.id,
-      company_id: result.company.id,
-      role: 'admin'
-    });
-    const refresh_token = generateRefreshToken({ 
-      first_name, 
-      last_name, 
-      phone, 
-      email,
-      user_id: result.user.id,
-      company_id: result.company.id,
-      role: 'admin'
-    });
+    // Generate final tokens with actual IDs
+    try {
+      token = generateToken({ 
+        first_name, 
+        last_name, 
+        phone, 
+        email,
+        user_id: result.user.id,
+        company_id: result.company.id,
+        role: 'admin'
+      });
+      refresh_token = generateRefreshToken({ 
+        first_name, 
+        last_name, 
+        phone, 
+        email,
+        user_id: result.user.id,
+        company_id: result.company.id,
+        role: 'admin'
+      });
+    } catch (error) {
+      console.error('Error generating final tokens:', error);
+      // Rollback the transaction by deleting the created user and company
+      await prisma.$transaction([
+        prisma.user.delete({ where: { id: result.user.id } }),
+        prisma.company.delete({ where: { id: result.company.id } })
+      ]);
+      return {
+        status_code: 500,
+        status: false,
+        message: 'Failed to generate authentication tokens',
+        error: 'JWT secret is not properly configured'
+      };
+    }
 
     // Update user with tokens
     await prisma.user.update({
@@ -152,11 +209,16 @@ async function signup({ first_name, last_name, phone, password, email = null, co
       company_id: result.company.id,
       token,
       refresh_token,
-      role: 'admin' // Include role in response
+      role: 'admin'
     });
   } catch (error) {
-    // logger.error('Signup failed:', error);
-    throw error;
+    console.error('Signup failed:', error);
+    return {
+      status_code: 500,
+      status: false,
+      message: 'Failed to create user',
+      error: error.message || 'Internal server error'
+    };
   }
 }
 

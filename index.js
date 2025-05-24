@@ -7,7 +7,8 @@ const authRouter = require('./module_auth/src/routes/auth.route');
 const errorHandler = require('./module_auth/src/middleware/error.middleware');
 const serverless = require('serverless-http');
 const projectRouter = require('./module_project/src/routes/project.route');
-
+const taskRouter = require('./module_task/src/routes/task.route');
+const trimBody = require('./middleware/trimBody')
 const app = express();
 console.log("process.env.DATABASE_URL from index.js", process.env.DATABASE_URL);
 // For local development
@@ -39,6 +40,11 @@ app.use('/auth', authRouter);
 
 // Project routes
 app.use('/projects', projectRouter);
+
+// Task routes
+app.use('/tasks', taskRouter);
+
+app.use(trimBody)
 
 // 404 handler
 app.use((req, res) => {

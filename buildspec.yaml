@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 22
+      nodejs: 20
     commands:
       - npm install -g aws-sam-cli
       - npm install
@@ -11,6 +11,7 @@ phases:
   pre_build:
     commands:
       - echo "Running pre-build scripts"
+      - npm test # Optional, if you have tests
 
   build:
     commands:
@@ -27,3 +28,4 @@ artifacts:
     - src/**
     - package.json
     - package-lock.json
+    - env.json # Add if needed

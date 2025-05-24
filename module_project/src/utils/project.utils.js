@@ -1,82 +1,61 @@
-const logger = require('../../../utils/logger');
-const { Prisma } = require('@prisma/client');
+const { parseFloat, parseImagePath, cleanData, parseDate, parseEndDate } = require('../../../utils/data');
+const { responses } = require('../../../utils/response');
 
-// Error handling utility
-const handleError = (res, error, operation) => {
-  logger.error(`${operation} error:`, error);
+// Project data parsing functions
+const parseProjectData = (req) => {
+  try {
+    const projectData = {
+      project_name: req.body.project_name,
+      project_location: req.body.project_location,
+      project_vaildation_amount: parseFloat(req.body.project_vaildation_amount),
+      project_spent_amount: parseFloat(req.body.project_spent_amount),
+      project_start_date: parseDate(req.body.project_start_date),
+      project_end_date: parseEndDate(req.body.project_end_date),
+      project_image: parseImagePath(req.file),
+      project_status: req.body.project_status || 'in_progress'
+    };
 
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    return res.status(400).json({
-      status_code: 400,
-      status: false,
-      message: 'Database operation failed',
-      error: error.message
-    });
+    return cleanData(projectData);
+  } catch (error) {
+    throw new Error('Failed to parse project data: ' + error.message);
   }
-
-  return res.status(500).json({
-    status_code: 500,
-    status: false,
-    message: `Failed to ${operation}`,
-    error: error.message || 'Internal server error'
-  });
 };
 
-// Validation error response
-const validationError = (res, message) => {
-  return res.status(400).json({
-    status_code: 400,
-    status: false,
-    message
-  });
-};
-
-// Authentication validation
-const validateAuth = (req, res) => {
-  const { company_id, user_id } = req.user;
-  if (!company_id || !user_id) {
-    validationError(res, 'Unauthorized: Missing company or user information');
-    return null;
-  }
-  return { company_id, user_id };
-};
-
-// Project data parsing
-const parseProjectData = (req) => ({
-  project_name: req.body.project_name,
-  project_location: req.body.project_location,
-  project_vaildation_amount: parseFloat(req.body.project_vaildation_amount) || 0,
-  project_spent_amount: parseFloat(req.body.project_spent_amount) || 0,
-  project_start_date: req.body.project_start_date,
-  project_end_date: req.body.project_end_date,
-  project_image: req.file ? `/uploads/${req.file.filename}` : null
-});
-
-// Update project data parsing
 const parseUpdateProjectData = (req) => {
-  const projectData = {
-    project_name: req.body.project_name,
-    project_location: req.body.project_location,
-    project_vaildation_amount: req.body.project_vaildation_amount ? parseFloat(req.body.project_vaildation_amount) : undefined,
-    project_spent_amount: req.body.project_spent_amount ? parseFloat(req.body.project_spent_amount) : undefined,
-    project_status: req.body.project_status,
-    project_start_date: req.body.project_start_date,
-    project_end_date: req.body.project_end_date,
-    project_image: req.file ? `/uploads/${req.file.filename}` : undefined
-  };
+  try {
+    const projectData = {
+      project_name: req.body.project_name,
+      project_location: req.body.project_location,
+      project_vaildation_amount: parseFloat(req.body.project_vaildation_amount),
+      project_spent_amount: parseFloat(req.body.project_spent_amount),
+      project_start_date: parseDate(req.body.project_start_date),
+      project_end_date: parseEndDate(req.body.project_end_date),
+      project_image: parseImagePath(req.file),
+      project_status: req.body.project_status
+    };
 
-  // Remove undefined values
-  Object.keys(projectData).forEach(key =>
-    projectData[key] === undefined && delete projectData[key]
-  );
+    return cleanData(projectData);
+  } catch (error) {
+    throw new Error('Failed to parse project update data: ' + error.message);
+  }
+};
 
-  return projectData;
+// Project validation functions
+const validateProjectDates = (startDate, endDate) => {
+  if (startDate && endDate && startDate > endDate) {
+    throw new Error('Project start date cannot be after end date');
+  }
+};
+
+const validateProjectAmounts = (validationAmount, spentAmount) => {
+  if (validationAmount && spentAmount && spentAmount > validationAmount) {
+    throw new Error('Spent amount cannot exceed validation amount');
+  }
 };
 
 module.exports = {
-  handleError,
-  validationError,
-  validateAuth,
   parseProjectData,
-  parseUpdateProjectData
+  parseUpdateProjectData,
+  validateProjectDates,
+  validateProjectAmounts
 }; 

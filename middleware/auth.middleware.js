@@ -1,5 +1,4 @@
-const { verifyToken } = require('../../../utils/jwt');
-const { responses } = require('../utils/response');
+const { verifyToken } = require('../utils/jwt');
 
 exports.authMiddleware = async (req, res, next) => {
   try {

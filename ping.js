@@ -1,6 +1,7 @@
 require('dotenv').config();
 const env = process.env.NODE_ENV;
-const prisma = require('./config/prisma');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const logger = require('./utils/logger');
 
 module.exports.dbCheck = async (req, res) => {
@@ -37,4 +38,75 @@ module.exports.time = async (req, res) => {
     message: `Hello, the current time is ${new Date().toTimeString()}.`,
     env
   });
+};
+
+// Simple ping handler
+exports.handler = async (event) => {
+  try {
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true,
+      },
+      body: JSON.stringify({
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+      })
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true,
+      },
+      body: JSON.stringify({
+        message: 'Internal server error',
+        error: error.message
+      })
+    };
+  }
+};
+
+// Database ping handler
+exports.pingDb = async (event) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true,
+      },
+      body: JSON.stringify({
+        message: 'Database connection successful',
+        timestamp: new Date().toISOString()
+      })
+    };
+  } catch (error) {
+    console.error('Database connection error:', error);
+    
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true,
+      },
+      body: JSON.stringify({
+        message: 'Database connection failed',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      })
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
 }; 

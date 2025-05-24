@@ -8,6 +8,7 @@ migrations/
 .env
 .env.local
 .env.*.local
+env.json
 
 # Build output
 .aws-sam/

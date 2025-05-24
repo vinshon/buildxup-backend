@@ -1,4 +1,4 @@
-const logger = require('../../../utils/logger');
+const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
   logger.error('Error:', err);
@@ -10,6 +10,15 @@ const errorHandler = (err, req, res, next) => {
       status: false,
       message: 'Duplicate entry',
       error: 'A record with this data already exists'
+    });
+  }
+
+  if (err.code === 'P2003') {
+    return res.status(400).json({
+      status_code: 400,
+      status: false,
+      message: 'Invalid reference',
+      error: 'The referenced record does not exist'
     });
   }
 
@@ -32,12 +41,22 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Handle authentication errors
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({
+      status_code: 401,
+      status: false,
+      message: 'Unauthorized',
+      error: 'Invalid or missing authentication token'
+    });
+  }
+
   // Handle other errors
   res.status(500).json({
     status_code: 500,
     status: false,
     message: 'Internal server error',
-    error: err.message || 'Something went wrong'
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
 };
 

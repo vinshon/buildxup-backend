@@ -90,6 +90,7 @@ model project {
   company_id     String
   company        company         @relation(fields: [company_id], references: [id])
   project_images project_image[]
+  tasks          task[]
 
   @@index([company_id])
   @@index([is_deleted])
@@ -109,4 +110,23 @@ model project_image {
 
   @@index([project_id])
   @@index([task_date])
+}
+
+model task {
+  id               String   @id @default(uuid())
+  task_name        String
+  task_description String?
+  project_id       String
+  project          project  @relation(fields: [project_id], references: [id])
+  due_date         DateTime
+  status           String   @default("pending")
+  assigned_to      String?
+  task_image       String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  is_deleted       Boolean  @default(false)
+
+  @@index([project_id])
+  @@index([status])
+  @@index([created_at])
 }
