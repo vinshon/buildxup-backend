@@ -4,6 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const logger = require('./utils/logger');
 
+
 module.exports.dbCheck = async (req, res) => {
   let dbStatus = "Not Connected";
   const startTime = Date.now();
