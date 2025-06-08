@@ -126,7 +126,92 @@ model task {
   updated_at       DateTime @updatedAt
   is_deleted       Boolean  @default(false)
 
+  // Back-relations for new models
+  attendances      task_employee_attendance[]
+  miscellaneous    task_miscellaneous[]
+  images           task_image[]
+  notes            task_note[]
+
   @@index([project_id])
   @@index([status])
   @@index([created_at])
+}
+
+model employee {
+  id             String   @id @default(uuid())
+  name           String
+  role           String
+  phone          String?
+  aadhar_number  String?  @unique
+  basic_salary   Decimal  @db.Decimal(10, 2)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  attendances    task_employee_attendance[]
+  is_deleted     Boolean   @default(false)
+  deleted_at     DateTime?
+}
+
+model task_employee_attendance {
+  id              String   @id @default(uuid())
+  task_id         String
+  employee_id     String
+  salary_for_task Decimal  @db.Decimal(10, 2)
+  status          attendance_status
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  employee        employee @relation(fields: [employee_id], references: [id])
+  task            task     @relation(fields: [task_id], references: [id])
+  is_deleted      Boolean   @default(false)
+  deleted_at      DateTime?
+
+  @@index([task_id])
+  @@index([employee_id])
+}
+
+enum attendance_status {
+  present
+  half_day
+  absent
+}
+
+model task_miscellaneous {
+  id         String   @id @default(uuid())
+  task_id    String
+  name       String
+  quantity   String
+  price      Decimal  @db.Decimal(10, 2)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  task       task     @relation(fields: [task_id], references: [id])
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  @@index([task_id])
+}
+
+model task_image {
+  id          String   @id @default(uuid())
+  task_id     String
+  image_url   String
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  task        task     @relation(fields: [task_id], references: [id])
+  is_deleted  Boolean   @default(false)
+  deleted_at  DateTime?
+
+  @@index([task_id])
+}
+
+model task_note {
+  id         String   @id @default(uuid())
+  task_id    String
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  task       task     @relation(fields: [task_id], references: [id])
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  @@index([task_id])
 }

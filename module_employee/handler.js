@@ -1,10 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const projectRouter = require('./src/routes/project.route');
+const employeeRouter = require('./src/routes/employee.route');
 const errorHandler = require('../middleware/error.middleware');
 const serverless = require('serverless-http');
-const logger = require('../utils/logger');
 const trimBody = require('../middleware/trimBody');
 
 const app = express();
@@ -13,10 +12,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(trimBody);
 
 // Routes
-app.use('/projects', projectRouter);
+app.use('/employees', employeeRouter);
+app.use(trimBody)
 
 // Error handling middleware
 app.use(errorHandler);

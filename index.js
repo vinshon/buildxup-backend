@@ -3,11 +3,8 @@ const cors = require('cors');
 const prisma = require('./config/prisma');
 const logger = require('./utils/logger');
 const { dbCheck, time } = require('./ping');
-const authRouter = require('./module_auth/src/routes/auth.route');
 const errorHandler = require('./module_auth/src/middleware/error.middleware');
 const serverless = require('serverless-http');
-const projectRouter = require('./module_project/src/routes/project.route');
-const taskRouter = require('./module_task/src/routes/task.route');
 const trimBody = require('./middleware/trimBody')
 const app = express();
 console.log("process.env.DATABASE_URL from index.js", process.env.DATABASE_URL);
@@ -36,13 +33,20 @@ app.get('/server/ping', time);
 app.get('/server/ping-db', dbCheck);
 
 // Auth routes
+const authRouter = require('./module_auth/src/routes/auth.route');
 app.use('/auth', authRouter);
 
 // Project routes
+const projectRouter = require('./module_project/src/routes/project.route');
 app.use('/projects', projectRouter);
 
 // Task routes
+const taskRouter = require('./module_task/src/routes/task.route');
 app.use('/tasks', taskRouter);
+
+// Employee routes
+const employeeRouter = require('./module_employee/src/routes/employee.route');
+app.use('/employees', employeeRouter);
 
 app.use(trimBody)
 
@@ -66,6 +70,28 @@ app.use((req, res) => {
         getById: 'GET /projects/:projectId',
         update: 'PUT /projects/:projectId',
         delete: 'DELETE /projects/:projectId',
+      },
+      employees: {
+        create: 'POST /employees',
+        getAll: 'GET /employees',
+        getById: 'GET /employees/:employeeId',
+        update: 'PUT /employees/:employeeId',
+        delete: 'DELETE /employees/:employeeId',
+      },
+      tasks: {
+        create: 'POST /tasks',
+        getAll: 'GET /tasks',
+        getById: 'GET /tasks/:taskId',
+        update: 'PUT /tasks/:taskId',
+        delete: 'DELETE /tasks/:taskId',
+        attendance: {
+          create: 'POST /tasks/:taskId/attendance',
+          createBulk: 'POST /tasks/:taskId/attendance/bulk',
+          getAll: 'GET /tasks/:taskId/attendance',
+          getById: 'GET /tasks/:taskId/attendance/:attendanceId',
+          update: 'PUT /tasks/:taskId/attendance/:attendanceId',
+          delete: 'DELETE /tasks/:taskId/attendance/:attendanceId'
+        }
       },
       health: {
         ping: 'GET /server/ping',

@@ -155,6 +155,145 @@ Resources:
             Path: /tasks/{taskId}
             Method: delete
 
+        # Task Attendance
+        CreateTaskAttendance:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/attendance
+            Method: post
+        GetTaskAttendances:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/attendance
+            Method: get
+        GetTaskAttendanceById:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/attendance/{attendanceId}
+            Method: get
+        UpdateTaskAttendance:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/attendance/{attendanceId}
+            Method: put
+        DeleteTaskAttendance:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/attendance/{attendanceId}
+            Method: delete
+
+        # Task Miscellaneous
+        CreateTaskMiscellaneous:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/miscellaneous
+            Method: post
+        GetTaskMiscellaneous:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/miscellaneous
+            Method: get
+        GetTaskMiscellaneousById:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/miscellaneous/{miscId}
+            Method: get
+        UpdateTaskMiscellaneous:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/miscellaneous/{miscId}
+            Method: put
+        DeleteTaskMiscellaneous:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/miscellaneous/{miscId}
+            Method: delete
+
+        # Task Images
+        CreateTaskImage:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/images
+            Method: post
+        GetTaskImages:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/images
+            Method: get
+        GetTaskImageById:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/images/{imageId}
+            Method: get
+        UpdateTaskImage:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/images/{imageId}
+            Method: put
+        DeleteTaskImage:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/images/{imageId}
+            Method: delete
+
+        # Task Notes
+        CreateTaskNote:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/notes
+            Method: post
+        GetTaskNotes:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/notes
+            Method: get
+        GetTaskNoteById:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/notes/{noteId}
+            Method: get
+        UpdateTaskNote:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/notes/{noteId}
+            Method: put
+        DeleteTaskNote:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}/notes/{noteId}
+            Method: delete
+
+  EmployeeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: module_employee/handler.handler
+      Events:
+        CreateEmployee:
+          Type: Api
+          Properties:
+            Path: /employees
+            Method: post
+        GetEmployees:
+          Type: Api
+          Properties:
+            Path: /employees
+            Method: get
+        GetEmployeeById:
+          Type: Api
+          Properties:
+            Path: /employees/{employeeId}
+            Method: get
+        UpdateEmployee:
+          Type: Api
+          Properties:
+            Path: /employees/{employeeId}
+            Method: put
+        DeleteEmployee:
+          Type: Api
+          Properties:
+            Path: /employees/{employeeId}
+            Method: delete
 
   HealthFunction:
     Type: AWS::Serverless::Function
