@@ -126,7 +126,10 @@ async function getTasks(companyId, filters = {}) {
 
     // Add project filter if provided
     if (filters.project_id) {
-      whereClause.project_id = filters.project_id;
+      whereClause.project = {
+        ...whereClause.project,
+        id: filters.project_id
+      };
     }
 
     const tasks = await prisma.task.findMany({
