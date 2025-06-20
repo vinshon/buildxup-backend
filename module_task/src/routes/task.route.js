@@ -22,6 +22,27 @@ router.get('/:taskId/attendance', attendanceHandler.getTaskAttendancesHandler);
 router.get('/:taskId/attendance/:attendanceId', attendanceHandler.getTaskAttendanceByIdHandler);
 router.put('/:taskId/attendance/:attendanceId', attendanceHandler.updateTaskAttendanceHandler);
 router.delete('/:taskId/attendance/:attendanceId', attendanceHandler.softDeleteTaskAttendanceHandler);
+// Task miscellaneous
+const miscHandler = require('../handlers/task_miscellaneous.handler');
+router.post('/:taskId/miscellaneous', miscHandler.createTaskMiscellaneousHandler);
+router.get('/:taskId/miscellaneous', miscHandler.getTaskMiscellaneousHandler);
+router.get('/:taskId/miscellaneous/:miscId', miscHandler.getTaskMiscellaneousByIdHandler);
+router.put('/:taskId/miscellaneous/:miscId', miscHandler.updateTaskMiscellaneousHandler);
+router.delete('/:taskId/miscellaneous/:miscId', miscHandler.softDeleteTaskMiscellaneousHandler);
+// Task images
+const imageHandler = require('../handlers/task_image.handler');
+router.post('/:taskId/images', upload.single('task_image'), imageHandler.createTaskImageHandler);
+router.get('/:taskId/images', imageHandler.getTaskImagesHandler);
+router.get('/:taskId/images/:imageId', imageHandler.getTaskImageByIdHandler);
+router.put('/:taskId/images/:imageId', upload.single('task_image'), imageHandler.updateTaskImageHandler);
+router.delete('/:taskId/images/:imageId', imageHandler.softDeleteTaskImageHandler);
+// Task notes
+const noteHandler = require('../handlers/task_note.handler');
+router.post('/:taskId/notes', noteHandler.createTaskNoteHandler);
+router.get('/:taskId/notes', noteHandler.getTaskNotesHandler);
+router.get('/:taskId/notes/:noteId', noteHandler.getTaskNoteByIdHandler);
+router.put('/:taskId/notes/:noteId', noteHandler.updateTaskNoteHandler);
+router.delete('/:taskId/notes/:noteId', noteHandler.softDeleteTaskNoteHandler);
 
 // 404 handler for task routes
 router.use((req, res) => {
@@ -36,14 +57,6 @@ router.use((req, res) => {
         getById: 'GET /tasks/:taskId',
         update: 'PUT /tasks/:taskId',
         delete: 'DELETE /tasks/:taskId'
-      },
-      attendance: {
-        create: 'POST /tasks/:taskId/attendance',
-        createBulk: 'POST /tasks/:taskId/attendance/bulk',
-        getAll: 'GET /tasks/:taskId/attendance',
-        getById: 'GET /tasks/:taskId/attendance/:attendanceId',
-        update: 'PUT /tasks/:taskId/attendance/:attendanceId',
-        delete: 'DELETE /tasks/:taskId/attendance/:attendanceId'
       }
     }
   });

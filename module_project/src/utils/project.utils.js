@@ -12,7 +12,8 @@ const parseProjectData = (req) => {
       project_start_date: parseDate(req.body.project_start_date),
       project_end_date: parseEndDate(req.body.project_end_date),
       project_image: parseImagePath(req.file),
-      project_status: req.body.project_status || 'in_progress'
+      project_status: req.body.project_status || 'in_progress',
+      project_description: req.body.project_description
     };
 
     return cleanData(projectData);
@@ -31,7 +32,8 @@ const parseUpdateProjectData = (req) => {
       project_start_date: parseDate(req.body.project_start_date),
       project_end_date: parseEndDate(req.body.project_end_date),
       project_image: parseImagePath(req.file),
-      project_status: req.body.project_status
+      project_status: req.body.project_status,
+      project_description: req.body.project_description
     };
 
     return cleanData(projectData);

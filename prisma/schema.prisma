@@ -74,6 +74,7 @@ model user_company {
 model project {
   id                        String    @id @default(uuid())
   project_name              String
+  project_description       String?   // Optional project description
   project_location          String
   project_vaildation_amount Decimal   @db.Decimal(10, 2)
   project_spent_amount      Decimal   @db.Decimal(10, 2)

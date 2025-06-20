@@ -31,6 +31,7 @@ async function createProject(data) {
     // Format dates from YYYY-MM-DD to start and end of day
     const projectData = {
       project_name: data.project_name,
+      project_description: data.project_description,
       project_location: data.project_location,
       project_vaildation_amount: data.project_vaildation_amount,
       project_spent_amount: data.project_spent_amount,
