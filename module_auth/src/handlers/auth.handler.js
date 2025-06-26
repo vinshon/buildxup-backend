@@ -1,7 +1,6 @@
 const { signup, verifyOTP, verifyLogin, tempOTP } = require('../controllers/auth.controller');
 const { validateSignup, validateOTP, validateLogin, validateTempOTP } = require('../schemas/auth.schema');
 const logger = require('../../../utils/logger');
-const emailService = require('../../../utils/email');
 
 exports.tempOTPHandler = async (req, res) => {
   try {
@@ -136,17 +135,3 @@ exports.verifyLoginHandler = async (req, res) => {
     });
   }
 };
-
-async function sendOTP(req, res) {
-  try {
-    const { email } = req.body;
-    const otp = generateOTP(); // Your OTP generation logic
-    
-    await emailService.sendOTPEmail(email, otp);
-    
-    // Rest of your code...
-  } catch (error) {
-    logger.error('Error sending OTP:', error);
-    res.status(500).json({ error: 'Failed to send OTP' });
-  }
-}

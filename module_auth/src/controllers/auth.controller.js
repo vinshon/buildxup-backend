@@ -2,8 +2,8 @@ const prisma = require('../../../config/prisma');
 const bcrypt = require('bcryptjs');
 const { generateToken, generateRefreshToken } = require('../../../utils/jwt');
 const { sendSMSOTP, sendEmailOTP } = require('../../../utils/twilio');
-const { responses } = require('../utils/response');
-// const logger = require('../../../utils/logger');
+const { responses } = require('../../../utils/response');
+const logger = require('../../../utils/logger');
 
 async function tempOTP({ email, phone }) {
   try {
@@ -204,7 +204,7 @@ async function signup({ first_name, last_name, phone, password, email = null, co
       },
     });
 
-    return responses.userCreated({
+    return responses.created('User created successfully', {
       user_id: result.user.id,
       company_id: result.company.id,
       token,
@@ -239,7 +239,7 @@ async function verifyOTP({ phone, email, otp }) {
 
     return responses.otpVerified();
   } catch (error) {
-    // logger.error('OTP verification failed:', error);
+    logger.error('OTP verification failed:', error);
     throw error;
   }
 }

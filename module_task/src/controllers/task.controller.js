@@ -38,7 +38,7 @@ async function createTask(data) {
       }
     });
 
-    return responses.taskCreated(task);
+    return responses.created('Task created successfully', task);
   } catch (error) {
     console.error('createTask error:', error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -139,7 +139,7 @@ async function getTasks(companyId, filters = {}) {
       }
     });
 
-    return responses.tasksRetrieved(tasks);
+    return responses.retrieved('Tasks retrieved successfully', tasks);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return responses.badRequest('Error retrieving tasks: ' + error.message);
@@ -169,7 +169,7 @@ async function getTaskById(taskId, companyId) {
       return responses.taskNotFound();
     }
 
-    return responses.taskRetrieved(task);
+    return responses.retrieved('Task retrieved successfully', task);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return responses.badRequest('Error retrieving task');
@@ -218,7 +218,7 @@ async function updateTask(taskId, data, companyId) {
       }
     });
 
-    return responses.taskUpdated(task);
+    return responses.updated('Task updated successfully', task);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') {
@@ -257,7 +257,7 @@ async function softDeleteTask(taskId, companyId) {
       }
     });
 
-    return responses.taskDeleted();
+    return responses.deleted('Task deleted successfully');
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return responses.badRequest('Error deleting task');

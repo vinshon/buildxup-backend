@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const authRouter = require('./src/routes/auth.route');
-const errorHandler = require('./src/middleware/error.middleware');
+const errorHandler = require('../middleware/error.middleware');
 const serverless = require('serverless-http');
 const trimBody = require('../middleware/trimBody');
 

@@ -44,18 +44,27 @@ module.exports.time = async (req, res) => {
 // Simple ping handler
 exports.handler = async (event) => {
   try {
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
-      },
-      body: JSON.stringify({
-        message: 'Server is running',
-        timestamp: new Date().toISOString()
-      })
-    };
+    // Check which endpoint was called
+    const path = event.path || event.requestContext?.path || '';
+    
+    if (path.includes('/server/ping-db')) {
+      // Call the database ping function
+      return await exports.pingDb(event);
+    } else {
+      // Call the simple ping function
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true,
+        },
+        body: JSON.stringify({
+          message: 'Server is running',
+          timestamp: new Date().toISOString()
+        })
+      };
+    }
   } catch (error) {
     console.error('Error:', error);
     return {

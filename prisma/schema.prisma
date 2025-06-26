@@ -76,8 +76,8 @@ model project {
   project_name              String
   project_description       String?   // Optional project description
   project_location          String
-  project_vaildation_amount Decimal   @db.Decimal(10, 2)
-  project_spent_amount      Decimal   @db.Decimal(10, 2)
+  project_vaildation_amount Decimal   @db.Decimal(15, 2)
+  project_spent_amount      Decimal   @db.Decimal(15, 2)
   project_start_date        DateTime
   project_end_date          DateTime
   project_image             String?   // Optional project image field

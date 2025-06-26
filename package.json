@@ -6,10 +6,17 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "node index.js",
+    "build": "sam build",
+    "start": "npm run build && nodemon --exec sam local start-api --port 4000",
     "dev": "nodemon index.js",
-    "sam:build": "sam build",
-    "sam:start": "sam local start-api --env-vars env.json --port 4000"
+    "prisma:build": "node scripts/build-prisma-schema.js",
+    "prisma:pull": "node scripts/pull-prisma-schema.js",
+    "prisma:generate": "npm run prisma:build && prisma generate",
+    "prisma:migrate": "npm run prisma:build && prisma migrate dev",
+    "prisma:push": "npm run prisma:build && prisma db push",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:validate": "npx prisma validate"
   },
   "keywords": [],
   "author": "",

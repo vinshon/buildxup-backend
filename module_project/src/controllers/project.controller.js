@@ -56,7 +56,7 @@ async function createProject(data) {
         project_images: true
       }
     });
-    return responses.projectCreated(project);
+    return responses.created('Project created successfully', project);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
@@ -99,7 +99,7 @@ async function getProjects(companyId, filters = {}) {
         company: true
       }
     });
-    return responses.projectsRetrieved(projects);
+    return responses.retrieved('Projects retrieved successfully', projects);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return responses.badRequest('Error retrieving projects');
@@ -134,7 +134,7 @@ async function getProjectById(projectId, companyId) {
       return responses.projectNotFound();
     }
 
-    return responses.projectRetrieved(project);
+    return responses.retrieved('Project retrieved successfully', project);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return responses.badRequest('Error retrieving project');
@@ -189,7 +189,7 @@ async function updateProject(projectId, data, companyId) {
         project_images: true
       }
     });
-    return responses.projectUpdated(project);
+    return responses.updated('Project updated successfully', project);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') {
@@ -239,7 +239,7 @@ async function softDeleteProject(projectId, companyId) {
         company: true
       }
     });
-    return responses.projectDeleted(project);
+    return responses.deleted('Project deleted successfully', project);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') {

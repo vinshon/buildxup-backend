@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const logger = require("../../../utils/logger");
-const { authMiddleware } = require("../../../module_auth/src/middleware/auth.middleware");
+const { authMiddleware } = require("../../../middleware/auth.middleware");
 const upload = require("../../../config/multer");
 
 // Register authentication middleware for all project routes
