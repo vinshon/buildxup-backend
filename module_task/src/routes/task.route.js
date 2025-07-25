@@ -1,18 +1,22 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 const logger = require("../../../utils/logger");
 const { authMiddleware } = require("../../../middleware/auth.middleware");
-const upload = require("../../../config/multer");
+const s3Service = require("../../../utils/s3");
+
+// Configure unified S3 multer for tasks - uses 'images' field name for payloads
+const uploadTaskUnified = s3Service.configureUnifiedMulter('tasks', 10);
 
 // Apply authentication middleware to all routes
 router.use(authMiddleware);
 
-// Task routes
+// Task routes with unified image upload
 const taskHandler = require('../handlers/task.handler');
-router.post("/", upload.single('task_image'), taskHandler.createTaskHandler);
+router.post("/", uploadTaskUnified, taskHandler.createTaskHandler);
 router.get("/", taskHandler.getTasksHandler);
 router.get("/:taskId", taskHandler.getTaskByIdHandler);
-router.put("/:taskId", upload.single('task_image'), taskHandler.updateTaskHandler);
+router.put("/:taskId", uploadTaskUnified, taskHandler.updateTaskHandler);
 router.delete("/:taskId", taskHandler.deleteTaskHandler);
 // Task attendance
 const attendanceHandler = require('../handlers/task_attendance.handler');
@@ -31,10 +35,10 @@ router.put('/:taskId/miscellaneous/:miscId', miscHandler.updateTaskMiscellaneous
 router.delete('/:taskId/miscellaneous/:miscId', miscHandler.softDeleteTaskMiscellaneousHandler);
 // Task images
 const imageHandler = require('../handlers/task_image.handler');
-router.post('/:taskId/images', upload.single('task_image'), imageHandler.createTaskImageHandler);
+router.post('/:taskId/images', uploadTaskUnified, imageHandler.createTaskImageHandler);
 router.get('/:taskId/images', imageHandler.getTaskImagesHandler);
 router.get('/:taskId/images/:imageId', imageHandler.getTaskImageByIdHandler);
-router.put('/:taskId/images/:imageId', upload.single('task_image'), imageHandler.updateTaskImageHandler);
+router.put('/:taskId/images/:imageId', uploadTaskUnified, imageHandler.updateTaskImageHandler);
 router.delete('/:taskId/images/:imageId', imageHandler.softDeleteTaskImageHandler);
 // Task notes
 const noteHandler = require('../handlers/task_note.handler');

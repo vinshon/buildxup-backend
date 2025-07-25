@@ -14,10 +14,13 @@ if (process.env.NODE_ENV === 'development') {
   app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
 
-    // Test database connection on startup
+    // Test database connection on startup (non-blocking)
     prisma.testConnection()
       .then(() => logger.info('Database connection successful'))
-      .catch(err => { logger.error('Database connection failed:', err) });
+      .catch(err => {
+        logger.error('Database connection failed:', err);
+        logger.warn('Server is running but database connection failed. Some features may not work.');
+      });
   });
 }
 // Middleware

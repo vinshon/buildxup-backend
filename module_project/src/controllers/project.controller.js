@@ -28,15 +28,15 @@ async function createProject(data) {
       return responses.unauthorizedAccess();
     }
 
-    // Format dates from YYYY-MM-DD to start and end of day
+    // Format dates from YYYY-MM-DD to proper Date objects
     const projectData = {
       project_name: data.project_name,
       project_description: data.project_description,
       project_location: data.project_location,
-      project_vaildation_amount: data.project_vaildation_amount,
-      project_spent_amount: data.project_spent_amount,
-      project_start_date: data.project_start_date,
-      project_end_date: data.project_end_date,
+      project_vaildation_amount: parseFloat(data.project_vaildation_amount),
+      project_spent_amount: parseFloat(data.project_spent_amount) || 0,
+      project_start_date: new Date(data.project_start_date + 'T00:00:00.000Z'),
+      project_end_date: new Date(data.project_end_date + 'T23:59:59.999Z'),
       project_image: data.project_image,
       project_status: data.project_status || 'in_progress',
       created_at: new Date(),
@@ -56,6 +56,32 @@ async function createProject(data) {
         project_images: true
       }
     });
+
+    // If there are image URLs, store them in project_images table
+    if (data.project_images && data.project_images.length > 0) {
+      const projectImageData = data.project_images.map(img => ({
+        task_title: 'Project Image',
+        task_date: new Date(),
+        image_url: img.image_url || img.location,
+        project_id: project.id
+      }));
+
+      await prisma.project_image.createMany({
+        data: projectImageData
+      });
+
+      // Fetch the project again with updated images
+      const updatedProject = await prisma.project.findUnique({
+        where: { id: project.id },
+        include: {
+          company: true,
+          project_images: true
+        }
+      });
+
+      return responses.created('Project created successfully', updatedProject);
+    }
+
     return responses.created('Project created successfully', project);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -168,8 +194,8 @@ async function updateProject(projectId, data, companyId) {
     // Format dates if they exist in the update data
     const updateData = {
       ...data,
-      project_start_date: data.project_start_date ? data.project_start_date : undefined,
-      project_end_date: data.project_end_date ? data.project_end_date : undefined,
+      project_start_date: data.project_start_date ? new Date(data.project_start_date + 'T00:00:00.000Z') : undefined,
+      project_end_date: data.project_end_date ? new Date(data.project_end_date + 'T23:59:59.999Z') : undefined,
       updated_at: new Date()
     };
 

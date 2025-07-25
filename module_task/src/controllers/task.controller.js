@@ -25,7 +25,7 @@ async function createTask(data) {
       due_date: new Date(data.due_date + 'T00:00:00.000Z'),
       status: data.status || 'pending',
       assigned_to: data.assigned_to,
-      task_image: data.task_image,
+      task_image: data.task_image, // This will be the S3 URL from multer-s3
       created_at: new Date(),
       updated_at: new Date(),
       is_deleted: false
@@ -37,6 +37,30 @@ async function createTask(data) {
         project: true
       }
     });
+
+    // If there are image URLs from S3 upload, store them in task_images table
+    if (data.task_images && data.task_images.length > 0) {
+      const taskImageData = data.task_images.map(img => ({
+        task_id: task.id,
+        image_url: img.image_url || img.location, // Handle both formats
+        description: 'Task Image'
+      }));
+
+      await prisma.task_image.createMany({
+        data: taskImageData
+      });
+
+      // Fetch the task again with images
+      const updatedTask = await prisma.task.findUnique({
+        where: { id: task.id },
+        include: {
+          project: true,
+          images: true
+        }
+      });
+
+      return responses.created('Task created successfully', updatedTask);
+    }
 
     return responses.created('Task created successfully', task);
   } catch (error) {
@@ -132,7 +156,10 @@ async function getTasks(companyId, filters = {}) {
     const tasks = await prisma.task.findMany({
       where: whereClause,
       include: {
-        project: true
+        project: true,
+        images: {
+          where: { is_deleted: false }
+        }
       },
       orderBy: {
         created_at: 'desc'
@@ -161,7 +188,10 @@ async function getTaskById(taskId, companyId) {
         is_deleted: false
       },
       include: {
-        project: true
+        project: true,
+        images: {
+          where: { is_deleted: false }
+        }
       }
     });
 
@@ -217,6 +247,30 @@ async function updateTask(taskId, data, companyId) {
         project: true
       }
     });
+
+    // If there are new image URLs from S3 upload, store them in task_images table
+    if (data.task_images && data.task_images.length > 0) {
+      const taskImageData = data.task_images.map(img => ({
+        task_id: task.id,
+        image_url: img.image_url || img.location, // Handle both formats
+        description: 'Task Image'
+      }));
+
+      await prisma.task_image.createMany({
+        data: taskImageData
+      });
+
+      // Fetch the task again with images
+      const updatedTask = await prisma.task.findUnique({
+        where: { id: task.id },
+        include: {
+          project: true,
+          images: true
+        }
+      });
+
+      return responses.updated('Task updated successfully', updatedTask);
+    }
 
     return responses.updated('Task updated successfully', task);
   } catch (error) {

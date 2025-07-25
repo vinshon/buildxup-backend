@@ -11,7 +11,7 @@ const parseProjectData = (req) => {
       project_spent_amount: parseFloat(req.body.project_spent_amount),
       project_start_date: parseDate(req.body.project_start_date),
       project_end_date: parseEndDate(req.body.project_end_date),
-      project_image: parseImagePath(req.file),
+      project_image: null, // Will be handled by S3 upload
       project_status: req.body.project_status || 'in_progress',
       project_description: req.body.project_description
     };
@@ -31,7 +31,7 @@ const parseUpdateProjectData = (req) => {
       project_spent_amount: parseFloat(req.body.project_spent_amount),
       project_start_date: parseDate(req.body.project_start_date),
       project_end_date: parseEndDate(req.body.project_end_date),
-      project_image: parseImagePath(req.file),
+      project_image: null, // Will be handled by S3 upload
       project_status: req.body.project_status,
       project_description: req.body.project_description
     };

@@ -11,6 +11,7 @@ const { handleError, validationError } = require('../../../utils/error');
 const { validateAuth } = require('../../../utils/data');
 const { parseProjectData, parseUpdateProjectData } = require('../utils/project.utils');
 const { responses } = require('../../../utils/response');
+const logger = require('../../../utils/logger');
 
 // Handler functions
 exports.createProjectHandler = async (req, res) => {
@@ -34,9 +35,16 @@ exports.createProjectHandler = async (req, res) => {
       );
     }
 
-    // Parse and validate project data
-    const projectData = parseProjectData(req);
-    const { error } = validateProject(projectData);
+    // Map unified 'images' field to correct database fields
+    const projectData = {
+      ...req.body,
+      // For database: project_images (multiple) or project_image (single)
+      project_images: req.files && req.files.length > 0 ? req.files : null, // Multiple images from S3
+      project_image: req.files && req.files.length === 1 ? req.files[0].location : null // Single image S3 URL
+    };
+
+    // Parse and validate project data (only validate form fields, not image fields)
+    const { error } = validateProject(req.body);
     if (error) {
       return res.status(400).json(
         responses.validationError(error.details[0].message)
@@ -49,6 +57,17 @@ exports.createProjectHandler = async (req, res) => {
 
     // Create project
     const result = await createProject({ ...projectData, ...auth });
+    
+    // Add image URLs to the response
+    if (result.status && projectData.project_images && projectData.project_images.length > 0) {
+      result.data = {
+        ...result.data,
+        project_images: projectData.project_images,
+        image_urls: projectData.project_images.map(img => img.location)
+      };
+      result.message = `${result.message} with ${projectData.project_images.length} image(s)`;
+    }
+
     return res.status(result.status_code).json(result);
   } catch (error) {
     return handleError(res, error, 'create project');

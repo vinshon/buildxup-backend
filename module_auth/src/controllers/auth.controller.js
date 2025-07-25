@@ -2,6 +2,7 @@ const prisma = require('../../../config/prisma');
 const bcrypt = require('bcryptjs');
 const { generateToken, generateRefreshToken } = require('../../../utils/jwt');
 const { sendSMSOTP, sendEmailOTP } = require('../../../utils/twilio');
+const emailService = require('../../../utils/email');
 const { responses } = require('../../../utils/response');
 const logger = require('../../../utils/logger');
 
@@ -203,6 +204,17 @@ async function signup({ first_name, last_name, phone, password, email = null, co
         phone: verifiedOTP.phone || undefined
       },
     });
+
+    // Send welcome email (non-blocking)
+    if (email) {
+      try {
+        await emailService.sendWelcomeEmail(email, first_name);
+        logger.info(`Welcome email sent to ${email}`);
+      } catch (emailError) {
+        logger.error('Failed to send welcome email:', emailError);
+        // Don't fail the signup process if email fails
+      }
+    }
 
     return responses.created('User created successfully', {
       user_id: result.user.id,

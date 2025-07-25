@@ -8,8 +8,8 @@ const projectSchema = Joi.object({
   project_status: Joi.string(),
   project_start_date: Joi.date().required(),
   project_end_date: Joi.date().required(),
-  project_image: Joi.string().allow(null, '').optional(),
   project_description: Joi.string().allow(null, '').optional(),
+  // Note: images field is handled separately by multer and handler
 });
 
 const updateProjectSchema = Joi.object({
@@ -20,8 +20,8 @@ const updateProjectSchema = Joi.object({
   project_status: Joi.string(),
   project_start_date: Joi.date(),
   project_end_date: Joi.date(),
-  project_image: Joi.string().allow(null, '').optional(),
   project_description: Joi.string().allow(null, '').optional(),
+  // Note: images field is handled separately by multer and handler
 });
 
 module.exports = {

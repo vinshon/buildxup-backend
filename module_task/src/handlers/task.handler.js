@@ -20,10 +20,12 @@ exports.createTaskHandler = async (req, res) => {
     const auth = validateAuth(req, res);
     if (!auth) return;
 
-    // Add image path if file was uploaded
+    // Map unified 'images' field to correct database fields
     const taskData = {
       ...req.body,
-      task_image: req.file ? `/uploads/${req.file.filename}` : null
+      // For database: task_images (multiple) or task_image (single)
+      task_images: req.files && req.files.length > 0 ? req.files : null, // Multiple images from S3
+      task_image: req.files && req.files.length === 1 ? req.files[0].location : null // Single image S3 URL
     };
 
     const result = await createTask({ ...taskData, ...auth });
@@ -90,10 +92,12 @@ exports.updateTaskHandler = async (req, res) => {
       return validationError(res, `Validation failed: ${error.details[0].message}`);
     }
 
-    // Add image path if file was uploaded
+    // Map unified 'images' field to correct database fields
     const taskData = {
       ...req.body,
-      task_image: req.file ? `/uploads/${req.file.filename}` : undefined
+      // For database: task_images (multiple) or task_image (single)
+      task_images: req.files && req.files.length > 0 ? req.files : undefined, // Multiple images from S3
+      task_image: req.files && req.files.length === 1 ? req.files[0].location : undefined // Single image S3 URL
     };
 
     const result = await updateTask(taskId, taskData, auth.company_id);

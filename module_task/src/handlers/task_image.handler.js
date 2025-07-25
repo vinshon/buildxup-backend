@@ -16,8 +16,16 @@ exports.createTaskImageHandler = async (req, res) => {
       return validationError(res, `Validation failed: ${error.details[0].message}`);
     }
     const { taskId } = req.params;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-    const result = await createTaskImage(taskId, { ...req.body, image_url: imageUrl });
+    
+    // Map unified 'images' field to correct database fields
+    const imageData = {
+      ...req.body,
+      task_images: req.files && req.files.length > 0 ? req.files : null, // Multiple images from S3
+      task_image: req.files && req.files.length === 1 ? req.files[0] : undefined, // Single image from S3
+      task_id: taskId
+    };
+    
+    const result = await createTaskImage(taskId, imageData);
     res.status(result.status_code).json(result);
   } catch (error) {
     logger.error('Create Task Image Error:', error);
@@ -54,8 +62,14 @@ exports.updateTaskImageHandler = async (req, res) => {
       return validationError(res, `Validation failed: ${error.details[0].message}`);
     }
     const { taskId, imageId } = req.params;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-    const result = await updateTaskImage(taskId, imageId, { ...req.body, ...(imageUrl && { image_url: imageUrl }) });
+    
+    // Map unified 'images' field to correct database fields
+    const imageData = {
+      ...req.body,
+      task_image: req.files && req.files.length > 0 ? req.files[0] : undefined // S3 file object from multer-s3
+    };
+    
+    const result = await updateTaskImage(taskId, imageId, imageData);
     res.status(result.status_code).json(result);
   } catch (error) {
     logger.error('Update Task Image Error:', error);
