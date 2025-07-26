@@ -7,48 +7,12 @@ Globals:
     Timeout: 30
     MemorySize: 1024
     Runtime: nodejs22.x
-    Environment:
-      Variables:
-        NODE_ENV: !Ref NodeEnv
-        DB_HOST: !Ref DBHost
-        DB_NAME: !Ref DBName
-        DB_USER: !Ref DBUser
-        DB_PASSWORD: !Ref DBPassword
-        DB_PORT: !Ref DBPort
-        JWT_SECRET: !Ref JWTSecret
-        DATABASE_URL: !Sub "postgresql://${DBUser}:${DBPassword}@${DBHost}:${DBPort}/${DBName}?schema=public"
-
-Parameters:
-  NodeEnv:
-    Type: String
-    Default: development
-    AllowedValues:
-      - development
-      - production
-  DBHost:
-    Type: String
-    Default: host.docker.internal
-  DBName:
-    Type: String
-    Default: buildxup
-  DBUser:
-    Type: String
-    Default: postgres
-  DBPassword:
-    Type: String
-    Default: postgres
-  DBPort:
-    Type: String
-    Default: '5432'
-  JWTSecret:
-    Type: String
-    Default: your_jwt_secret_key
 
 Resources:
   ApiGatewayApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref NodeEnv
+      StageName: stage
       BinaryMediaTypes:
         - "*/*"
       Cors:
@@ -56,82 +20,83 @@ Resources:
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
 
-
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
+      CodeUri: ./module_auth
       Handler: module_auth/handler.handler
-      Timeout: 30
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Timeout: 60
       Events:
         Auth:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /auth/{proxy+}
             Method: ANY
-
 
   ProjectFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
+      CodeUri: ./module_project
       Handler: module_project/handler.handler
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
       Events:
         Project:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /projects/{proxy+}
             Method: ANY
-
 
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
+      CodeUri: ./module_task
       Handler: module_task/handler.handler
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
       Events:
         Task:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /tasks/{proxy+}
             Method: ANY
-
 
   EmployeeFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
+      CodeUri: ./module_employee
       Handler: module_employee/handler.handler
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
       Events:
         Employee:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /employees/{proxy+}
             Method: ANY
-
 
   HealthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
+      CodeUri: ./ping
       Handler: ping.handler
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Timeout: 30
       Events:
         Ping:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /server/ping
             Method: get
         PingDb:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /server/ping-db
             Method: get
-
-
-Outputs:
-  ApiEndpoint:
-    Description: API Gateway endpoint URL
-    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${NodeEnv}/
