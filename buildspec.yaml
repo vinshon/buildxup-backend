@@ -11,7 +11,6 @@ phases:
   pre_build:
     commands:
       - echo "Running pre-build scripts"
-      - npm test # Optional
   build:
     commands:
       - sam build
