@@ -18,7 +18,8 @@ Resources:
   ApiGatewayApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref StageName
+      StageName: 
+        Ref: StageName
       BinaryMediaTypes:
         - "*/*"
       Cors:
@@ -29,6 +30,7 @@ Resources:
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ./module_auth
       Handler: module_auth/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 60
@@ -36,13 +38,15 @@ Resources:
         Auth:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
+            RestApiId: 
+              Ref: ApiGatewayApi
             Path: /auth/{proxy+}
             Method: ANY
 
   ProjectFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ./module_project
       Handler: module_project/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
@@ -50,13 +54,15 @@ Resources:
         Project:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
+            RestApiId: 
+              Ref: ApiGatewayApi
             Path: /projects/{proxy+}
             Method: ANY
 
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ./module_task
       Handler: module_task/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
@@ -64,13 +70,15 @@ Resources:
         Task:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
+            RestApiId: 
+              Ref: ApiGatewayApi
             Path: /tasks/{proxy+}
             Method: ANY
 
   EmployeeFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ./module_employee
       Handler: module_employee/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
@@ -78,13 +86,15 @@ Resources:
         Employee:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
+            RestApiId: 
+              Ref: ApiGatewayApi
             Path: /employees/{proxy+}
             Method: ANY
 
   HealthFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: .
       Handler: ping.handler
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
@@ -92,17 +102,20 @@ Resources:
         Ping:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
+            RestApiId: 
+              Ref: ApiGatewayApi
             Path: /server/ping
             Method: get
         PingDb:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
+            RestApiId: 
+              Ref: ApiGatewayApi
             Path: /server/ping-db
             Method: get
 
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
+    Value: 
+      Fn::Sub: "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
