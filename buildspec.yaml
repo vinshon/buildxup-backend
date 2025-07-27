@@ -1,40 +1,35 @@
 version: 0.2
 
 phases:
-  install:
-    runtime-versions:
-      nodejs: 22
+  pre_build:
     commands:
-      - echo "Nothing to do in the install phase"
+      - echo "Cleaning previous build artifacts..."
+      - rm -rf .aws-sam
+      - echo "Installing AWS SAM CLI and Node.js dependencies..."
+      - pip install aws-sam-cli
+      - npm ci
+      # Download your environment file from S3 (adjust path as needed)
+      - echo "Downloading .env from S3..."
+      - aws s3 cp s3://buildxup-delopyment-stage/backend/.env .env
 
   build:
     commands:
-      - echo "Build started on $(date)"
-
-      - echo "Downloading environment file from S3..."
-      - aws s3 cp s3://buildxup-delopyment-stage/backend/.env .env
-
-      - echo "Installing source NPM dependencies ..."
-      - npm ci
-
-      - echo "Verifying and creating S3 bucket/prefix if necessary..."
-      - |
-          if aws s3 ls "s3://buildxup-deployment-artifacts-12345" 2>&1 | grep -q 'NoSuchBucket'; then
-              aws s3 mb "s3://buildxup-deployment-artifacts-12345" --region "$AWS_DEFAULT_REGION"
-          fi
-
-      - echo "Building SAM application..."
+      - echo "Starting SAM build..."
       - sam build
-
       - echo "Packaging SAM template..."
-      - sam package --s3-bucket buildxup-deployment-artifacts-12345 --output-template-file packaged.yaml
-
-      - echo "Build completed on $(date)"
+      - sam package \
+          --template-file .aws-sam/build/template.yaml \
+          --s3-bucket buildxup-deployment-artifacts-12345 \
+          --output-template-file packaged.yaml
 
   post_build:
     commands:
-      - echo "Deploying SAM application..."
-      - sam deploy --template-file packaged.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
+      - echo "Deploying SAM application to CloudFormation stack..."
+      - sam deploy \
+          --template-file packaged.yaml \
+          --stack-name buildxup-backend-stage \
+          --capabilities CAPABILITY_IAM \
+          --no-fail-on-empty-changeset
 
 artifacts:
   files:
