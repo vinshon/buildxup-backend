@@ -17,19 +17,12 @@ phases:
       - echo "Starting SAM build..."
       - sam build
       - echo "Packaging SAM template..."
-      - sam package \
-          --template-file .aws-sam/build/template.yaml \
-          --s3-bucket buildxup-deployment-artifacts-12345 \
-          --output-template-file packaged.yaml
+      - sam package --template-file .aws-sam/build/template.yaml --s3-bucket buildxup-deployment-artifacts-12345 --output-template-file packaged.yaml
 
   post_build:
     commands:
       - echo "Deploying SAM application to CloudFormation stack..."
-      - sam deploy \
-          --template-file packaged.yaml \
-          --stack-name buildxup-backend-stage \
-          --capabilities CAPABILITY_IAM \
-          --no-fail-on-empty-changeset
+      - sam deploy --template-file packaged.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
 
 artifacts:
   files:
