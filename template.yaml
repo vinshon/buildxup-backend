@@ -100,3 +100,8 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: /server/ping-db
             Method: get
+            
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"

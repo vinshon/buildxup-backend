@@ -1,4 +1,5 @@
 version: 0.2
+
 phases:
   install:
     runtime-versions:
@@ -7,21 +8,20 @@ phases:
     commands:
       - pip install aws-sam-cli
       - npm install
-      - aws s3 cp s3://buildxup-delopyment-stage/backend/.env .env
   pre_build:
     commands:
-      - echo "Running pre-build scripts"
+      - echo "Downloading environment file from S3..."
+      - aws s3 cp s3://buildxup-delopyment-stage/backend/.env .env
+
   build:
     commands:
       - sam build
+      - sam package --s3-bucket buildxup-deployment-artifacts-12345 --output-template-file packaged.yaml
+
   post_build:
     commands:
-      - echo "Build completed on `date`"
+      - sam deploy --template-file packaged.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM
+
 artifacts:
   files:
-    - template.yaml
-    - .aws-sam/**
-    - src/**
-    - package.json
-    - package-lock.json
-    - .env
+    - packaged.yaml
