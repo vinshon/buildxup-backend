@@ -33,6 +33,23 @@ phases:
 
   post_build:
     commands:
+      - echo "Checking stack status and handling rollback..."
+      - |
+          STACK_STATUS=$(aws cloudformation describe-stacks --stack-name buildxup-backend-stage --region "$AWS_DEFAULT_REGION" --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "STACK_NOT_FOUND")
+          echo "Current stack status: $STACK_STATUS"
+          
+          if [[ "$STACK_STATUS" == *"ROLLBACK"* ]] || [[ "$STACK_STATUS" == *"FAILED"* ]]; then
+              echo "Stack is in rollback or failed state. Deleting stack..."
+              aws cloudformation delete-stack --stack-name buildxup-backend-stage --region "$AWS_DEFAULT_REGION"
+              echo "Waiting for stack deletion to complete..."
+              aws cloudformation wait stack-delete-complete --stack-name buildxup-backend-stage --region "$AWS_DEFAULT_REGION" || true
+              echo "Stack deletion completed."
+          elif [[ "$STACK_STATUS" == "STACK_NOT_FOUND" ]]; then
+              echo "Stack does not exist. Proceeding with deployment."
+          else
+              echo "Stack exists and is not in rollback state. Proceeding with update."
+          fi
+      
       - echo "Deploying SAM application..."
       - sam deploy --template-file packaged.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
 
