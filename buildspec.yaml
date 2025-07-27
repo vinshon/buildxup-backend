@@ -5,8 +5,7 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
-      - echo "Installing SAM CLI..."
-      - pip install aws-sam-cli
+      - echo "Nothing to do in the install phase"
 
   build:
     commands:
@@ -30,10 +29,6 @@ phases:
       - echo "Packaging SAM template..."
       - sam package --s3-bucket buildxup-deployment-artifacts-12345 --output-template-file packaged.yaml
 
-      - echo "Copying template files to artifacts directory..."
-      - cp template.yaml template-copy.yaml
-      - cp .aws-sam/build/template.yaml template-built.yaml
-
       - echo "Build completed on $(date)"
 
   post_build:
@@ -44,7 +39,4 @@ phases:
 artifacts:
   files:
     - template.yaml
-    - template-copy.yaml
-    - template-built.yaml
     - packaged.yaml
-    - .aws-sam/build/template.yaml
