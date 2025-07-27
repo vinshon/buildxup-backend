@@ -1,0 +1,44 @@
+# Development files
+.git/
+.gitignore
+README.md
+*.md
+.env.example
+.env.local
+.env.development
+.env.test
+
+# Development dependencies
+node_modules/nodemon/
+node_modules/prisma/
+
+# Build artifacts
+.aws-sam/
+packaged.yaml
+template-processed.yaml
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test files
+__tests__/
+*.test.js
+*.spec.js
+coverage/
+
+# Documentation
+docs/
+*.pdf
+*.doc
+*.docx 

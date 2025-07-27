@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const path = require('path');
@@ -7,9 +7,7 @@ const logger = require('./logger');
 
 class S3Service {
   constructor() {
-    this.s3 = new AWS.S3({
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    this.s3Client = new S3Client({
       region: process.env.AWS_REGION || 'us-east-1'
     });
 
@@ -64,12 +62,13 @@ class S3Service {
         }
       };
 
-      const result = await this.s3.upload(uploadParams).promise();
+      const command = new PutObjectCommand(uploadParams);
+      const result = await this.s3Client.send(command);
       
-      const imageUrl = this.getImageUrl(result.Key);
+      const imageUrl = this.getImageUrl(fileName);
       
       logger.info('File uploaded successfully to S3', {
-        fileName: result.Key,
+        fileName: fileName,
         originalName: file.originalname,
         size: file.size,
         url: imageUrl
@@ -77,7 +76,7 @@ class S3Service {
 
       return {
         success: true,
-        fileName: result.Key,
+        fileName: fileName,
         originalName: file.originalname,
         url: imageUrl,
         size: file.size,
@@ -117,7 +116,8 @@ class S3Service {
         Key: fileName
       };
 
-      const result = await this.s3.deleteObject(deleteParams).promise();
+      const command = new DeleteObjectCommand(deleteParams);
+      const result = await this.s3Client.send(command);
       
       logger.info('File deleted successfully from S3', {
         fileName: fileName,
@@ -173,10 +173,11 @@ class S3Service {
         Key: fileName
       };
 
-      await this.s3.headObject(params).promise();
+      const command = new HeadObjectCommand(params);
+      await this.s3Client.send(command);
       return true;
     } catch (error) {
-      if (error.code === 'NotFound') {
+      if (error.name === 'NotFound') {
         return false;
       }
       throw error;
@@ -191,7 +192,8 @@ class S3Service {
         Key: fileName
       };
 
-      const result = await this.s3.headObject(params).promise();
+      const command = new HeadObjectCommand(params);
+      const result = await this.s3Client.send(command);
       
       return {
         success: true,
@@ -216,7 +218,8 @@ class S3Service {
         MaxKeys: maxKeys
       };
 
-      const result = await this.s3.listObjectsV2(params).promise();
+      const command = new ListObjectsV2Command(params);
+      const result = await this.s3Client.send(command);
       
       const files = result.Contents.map(item => ({
         fileName: item.Key,
@@ -245,7 +248,8 @@ class S3Service {
         MaxKeys: 1
       };
 
-      await this.s3.listObjectsV2(params).promise();
+      const command = new ListObjectsV2Command(params);
+      await this.s3Client.send(command);
       logger.info('S3 connection test successful');
       return true;
     } catch (error) {
@@ -258,7 +262,7 @@ class S3Service {
   configureMulter(folder = 'uploads') {
     return multer({
       storage: multerS3({
-        s3: this.s3,
+        s3: this.s3Client,
         bucket: this.bucketName,
         key: (req, file, cb) => {
           const fileName = this.generateUniqueFileName(file.originalname, folder);
@@ -289,7 +293,7 @@ class S3Service {
   // Unified multer configuration that uses 'images' field name for payloads
   configureUnifiedMulter(folder = 'uploads', maxFiles = 10) {
     const storage = multerS3({
-      s3: this.s3,
+      s3: this.s3Client,
       bucket: this.bucketName,
       key: (req, file, cb) => {
         const fileName = this.generateUniqueFileName(file.originalname, folder);

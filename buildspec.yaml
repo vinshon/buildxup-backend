@@ -4,23 +4,37 @@ phases:
   install:
     runtime-versions:
       nodejs: 22
-      python: 3.11
     commands:
-      - pip install aws-sam-cli
-      - npm install
-  pre_build:
-    commands:
-      - echo "Downloading environment file from S3..."
-      - aws s3 cp s3://buildxup-delopyment-stage/backend/.env .env
+      - echo "Nothing to do in the install phase"
 
   build:
     commands:
+      - echo "Build started on $(date)"
+
+      - echo "Downloading environment file from S3..."
+      - aws s3 cp s3://buildxup-delopyment-stage/backend/.env .env
+
+      - echo "Installing source NPM dependencies ..."
+      - npm ci
+
+      - echo "Verifying and creating S3 bucket/prefix if necessary..."
+      - |
+          if aws s3 ls "s3://buildxup-deployment-artifacts-12345" 2>&1 | grep -q 'NoSuchBucket'; then
+              aws s3 mb "s3://buildxup-deployment-artifacts-12345" --region "$AWS_DEFAULT_REGION"
+          fi
+
+      - echo "Building SAM application..."
       - sam build
+
+      - echo "Packaging SAM template..."
       - sam package --s3-bucket buildxup-deployment-artifacts-12345 --output-template-file packaged.yaml
+
+      - echo "Build completed on $(date)"
 
   post_build:
     commands:
-      - sam deploy --template-file packaged.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM
+      - echo "Deploying SAM application..."
+      - sam deploy --template-file packaged.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
 
 artifacts:
   files:

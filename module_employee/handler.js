@@ -20,5 +20,5 @@ app.use(trimBody)
 // Error handling middleware
 app.use(errorHandler);
 
-// Export handler for serverless
-module.exports.handler = serverless(app); 
+// Export app for serverless
+module.exports.app = serverless(app); 

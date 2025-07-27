@@ -20,8 +20,5 @@ app.use(trimBody)
 // Error handling middleware
 app.use(errorHandler);
 
-// Create the Lambda handler
-const handler = serverless(app);
-
-// Export the handler for AWS Lambda
-module.exports.handler = handler;
+// Export the app for AWS Lambda
+module.exports.app = serverless(app);

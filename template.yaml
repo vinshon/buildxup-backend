@@ -29,8 +29,7 @@ Resources:
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./module_auth
-      Handler: module_auth/handler.handler
+      Handler: module_auth/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 60
       Events:
@@ -44,8 +43,7 @@ Resources:
   ProjectFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./module_project
-      Handler: module_project/handler.handler
+      Handler: module_project/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
       Events:
@@ -59,8 +57,7 @@ Resources:
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./module_task
-      Handler: module_task/handler.handler
+      Handler: module_task/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
       Events:
@@ -74,8 +71,7 @@ Resources:
   EmployeeFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./module_employee
-      Handler: module_employee/handler.handler
+      Handler: module_employee/handler.app
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
       Events:
@@ -89,7 +85,6 @@ Resources:
   HealthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
       Handler: ping.handler
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Timeout: 30
