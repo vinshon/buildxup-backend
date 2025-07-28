@@ -1,113 +1,231 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: BuildXup Backend API
-
+Description: BuildXup Backend API - Backup Template
+  
 Parameters:
-  StageName:
+  Stage:
     Type: String
-    Default: stage
-
-
+    Default: ${Stage}
+    Description: stage
+  ImageUri:
+    Type: String
+    Default: ${IMAGE_URI}
+    Description: Docker image URI for the Lambda function
+  DatabaseUrl:
+    Type: String
+    Default: ${DatabaseUrl}
+    Description: Database connection URL
+  JwtSecret:
+    Type: String
+    Default: ${JwtSecret}
+    Description: JWT secret key
+  JwtExpiration:
+    Type: String
+    Default: ${JwtExpiration}
+    Description: JWT expiration time
+  SendgridApiKey:
+    Type: String
+    Default: ${SendgridApiKey}
+    Description: SendGrid API key
+  RefreshTokenSecret:
+    Type: String
+    Default: ${RefreshTokenSecret}
+    Description: Refresh token secret
+  TokenExpire:
+    Type: String
+    Default: ${TokenExpire}
+    Description: Token expiration time
+  RefreshTokenExpire:
+    Type: String
+    Default: ${RefreshTokenExpire}
+    Description: Refresh token expiration time
+  TwilioAccountSID:
+    Type: String
+    Default: ${TwilioAccountSID}
+    Description: Twilio Account SID
+  TwilioAuthToken:
+    Type: String
+    Default: ${TwilioAuthToken}
+    Description: Twilio Auth Token
+  TwilioPhoneNumber:
+    Type: String
+    Default: ${TwilioPhoneNumber}
+    Description: Twilio phone number
+  FromEmail:
+    Type: String
+    Default: ${FromEmail}
+    Description: From email address
+  FromName:
+    Type: String
+    Default: ${FromName}
+    Description: From name
+  FrontendUrl:
+    Type: String
+    Default: ${FrontendUrl}
+    Description: Frontend URL
+  DatabaseHost:
+    Type: String
+    Default: ${DatabaseHost}
+    Description: Database host
+  DatabasePort:
+    Type: String
+    Default: ${DatabasePort}
+    Description: Database port
+  DatabaseUser:
+    Type: String
+    Default: ${DatabaseUser}
+    Description: Database user
+  DatabasePassword:
+    Type: String
+    Default: ${DatabasePassword}
+    Description: Database password
+  DatabaseName:
+    Type: String
+    Default: ${DatabaseName}
+    Description: Database name
+  DatabaseSchema:
+    Type: String
+    Default: ${DatabaseSchema}
+    Description: Database schema
+  AwsAccessKeyId:
+    Type: String
+    Default: ${AWSAccessKeyID}
+    Description: AWS Access Key ID
+  AwsSecretAccessKey:
+    Type: String
+    Default: ${AWSSecretAccessKey}
+    Description: AWS Secret Access Key
+  AwsS3BucketName:
+    Type: String
+    Default: ${AWSS3BucketName}
+    Description: AWS S3 bucket name
+  AwsRegion:
+    Type: String
+    Default: ${AWSRegion}
+    Description: AWS region
+  TestEmail:
+    Type: String
+    Default: ${TestEmail}
+    Description: Test email address
+   
+### --------------------- Lambda Configuration ----------------------- ###
 Globals:
   Function:
-    Timeout: 30
-    MemorySize: 1024
-    Runtime: nodejs22.x
+    Timeout: 100
+    MemorySize: 2048
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Stage
+        DATABASE_URL: !Ref DatabaseUrl
+        JWT_SECRET: !Ref JwtSecret
+        JWT_EXPIRES_IN: !Ref JwtExpiration
+        SENDGRID_API_KEY: !Ref SendgridApiKey
+        REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+        TOKEN_EXPIRE: !Ref TokenExpire
+        REFRESH_TOKEN_EXPIRE: !Ref RefreshTokenExpire
+        TWILIO_ACCOUNT_SID: !Ref TwilioAccountSID
+        TWILIO_AUTH_TOKEN: !Ref TwilioAuthToken
+        TWILIO_PHONE_NUMBER: !Ref TwilioPhoneNumber
+        FROM_EMAIL: !Ref FromEmail
+        FROM_NAME: !Ref FromName
+        FRONTEND_URL: !Ref FrontendUrl
+        DB_HOST: !Ref DatabaseHost
+        DB_PORT: !Ref DatabasePort
+        DB_USER: !Ref DatabaseUser
+        DB_PASSWORD: !Ref DatabasePassword
+        DB_NAME: !Ref DatabaseName
+        DB_SCHEMA: !Ref DatabaseSchema
+        AWS_ACCESS_KEY_ID: !Ref AwsAccessKeyId
+        AWS_SECRET_ACCESS_KEY: !Ref AwsSecretAccessKey
+        AWS_S3_BUCKET_NAME: !Ref AwsS3BucketName
+        AWS_REGION: !Ref AwsRegion
+        TEST_EMAIL: !Ref TestEmail
 
+### --------------------- API GATEWAY ----------------------- ###
 Resources:
-  ApiGatewayApi:
+  ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref StageName
+      StageName: !Ref Stage
+      EndpointConfiguration: REGIONAL
       BinaryMediaTypes:
         - "*/*"
       Cors:
         AllowMethods: "'*'"
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
-
+ 
+  # --------------------- Function for Authentication ---------------------- #
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
-      Handler: module_auth/handler.app
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["dist/module_auth/auth.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
-      Timeout: 60
       Events:
-        Auth:
+        AuthApi:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
             Path: /auth/{proxy+}
-            Method: ANY
+            Method: any
+            RestApiId: !Ref ApiGateway
 
-  ProjectFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ./
-      Handler: module_project/handler.app
-      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
-      Timeout: 30
-      Events:
-        Project:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayApi
-            Path: /projects/{proxy+}
-            Method: ANY
-
+  # --------------------- Function for Task Management ---------------------- #
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
-      Handler: module_task/handler.app
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["dist/module_task/task.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
-      Timeout: 30
       Events:
-        Task:
+        TaskApi:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
             Path: /tasks/{proxy+}
-            Method: ANY
+            Method: any
+            RestApiId: !Ref ApiGateway
 
+  # --------------------- Function for Project Management ---------------------- #
+  ProjectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["dist/module_project/project.handler"]
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Events:
+        ProjectApi:
+          Type: Api
+          Properties:
+            Path: /projects/{proxy+}
+            Method: any
+            RestApiId: !Ref ApiGateway
+
+  # --------------------- Function for Employee Management ---------------------- #
   EmployeeFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
-      Handler: module_employee/handler.app
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      ImageConfig:
+        Command: ["dist/module_employee/employee.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
-      Timeout: 30
       Events:
-        Employee:
+        EmployeeApi:
           Type: Api
           Properties:
-            RestApiId: !Ref ApiGatewayApi
             Path: /employees/{proxy+}
-            Method: ANY
-
-  HealthFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ./
-      Handler: ping.handler
-      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
-      Timeout: 30
-      Events:
-        Ping:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayApi
-            Path: /server/ping
-            Method: get
-        PingDb:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayApi
-            Path: /server/ping-db
-            Method: get
-
+            Method: any
+            RestApiId: !Ref ApiGateway
+  #--------------------------------------------------------------------------#
 Outputs:
-  ApiEndpoint:
-    Description: API Gateway endpoint URL
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.us-east-1.amazonaws.com/${Stage}/"
+  #--------------------------------------------------------------------------#

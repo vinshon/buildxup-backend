@@ -1,25 +1,27 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const projectRouter = require('./src/routes/project.route');
+const authRouter = require('./src/routes/auth.route');
 const errorHandler = require('../middleware/error.middleware');
 const serverless = require('serverless-http');
-const logger = require('../utils/logger');
 const trimBody = require('../middleware/trimBody');
 
 const app = express();
+console.log("process.env.DATABASE_URL from module_auth/handler.js", process.env.DATABASE_URL);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(trimBody);
 
 // Routes
-app.use('/projects', projectRouter);
+app.use('/auth', authRouter);
+app.use(trimBody)
 
 // Error handling middleware
 app.use(errorHandler);
 
-// Export app for serverless
-module.exports.app = serverless(app); 
+// Create the Lambda handler
+const handler = serverless(app);
+
+// Export the handler for AWS Lambda
+module.exports.handler = handler;

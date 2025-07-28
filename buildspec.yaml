@@ -5,89 +5,75 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
-      - echo "Installing SAM CLI..."
-      - pip install aws-sam-cli
-
-  pre_build:
-    commands:
-      - echo "Pre-build: Handling existing stack..."
-      - |
-          # Force delete stack if it exists in any problematic state
-          STACK_STATUS=$(aws cloudformation describe-stacks --stack-name buildxup-backend-stage --region "$AWS_DEFAULT_REGION" --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "STACK_NOT_FOUND")
-          echo "Current stack status: $STACK_STATUS"
-          
-          if [[ "$STACK_STATUS" != "STACK_NOT_FOUND" ]]; then
-              echo "Stack exists with status: $STACK_STATUS. Deleting stack..."
-              aws cloudformation delete-stack --stack-name buildxup-backend-stage --region "$AWS_DEFAULT_REGION"
-              echo "Waiting for stack deletion to complete..."
-              aws cloudformation wait stack-delete-complete --stack-name buildxup-backend-stage --region "$AWS_DEFAULT_REGION" || true
-              echo "Stack deletion completed."
-              
-              # Wait a bit more to ensure cleanup is complete
-              sleep 30
-          else
-              echo "Stack does not exist. Proceeding with deployment."
-          fi
+      - echo "Nothing to do in the install phase"
+      - echo "Starting Docker daemon..."
+      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock &
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
 
   build:
     commands:
       - echo "Build started on $(date)"
 
       - echo "Downloading environment file from S3..."
-      - aws s3 cp s3://buildxup-delopyment-stage/backend/.env .env
+      - aws s3 cp "s3://buildxup-delopyment-stage/backend/.env" .
+
+      - echo "Fetching Dockerfile from S3..."
+      - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" .
+
+      - echo "Installing dependencies..."
+      - npm install
 
       - echo "Installing source NPM dependencies ..."
       - npm ci
 
+      - echo "Generating Prisma client for all schemas..."
+      - npm run prisma:all:generate
+
+      - echo "Running app build to generate dist folder..."
+      - export NODE_OPTIONS="--max_old_space_size=4096"
+      - npm run build
+
       - echo "Verifying and creating S3 bucket/prefix if necessary..."
       - |
-          if aws s3 ls "s3://buildxup-deployment-artifacts-12345" 2>&1 | grep -q 'NoSuchBucket'; then
-              aws s3 mb "s3://buildxup-deployment-artifacts-12345" --region "$AWS_DEFAULT_REGION"
+          if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q 'NoSuchBucket'; then
+              aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"
           fi
 
-      - echo "Building SAM application with main template..."
-      - sam build
+          if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then
+              aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"
+          fi
 
-      - echo "Validating SAM template..."
-      - sam validate
+      - echo "Preparing Docker image for Lambda..."
+      - export ECR_REPO="stage/buildxup/backend"
+      - export IMAGE_TAG=$(echo latest | cut -c 1-7)
+      - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:$IMAGE_TAG"
+
+      - echo "Logging into ECR..."
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
+      
+      - echo "Building Docker image..."
+      - docker build -t $IMAGE_URI .
+
+      - echo "Pushing image to ECR..."
+      - docker push $IMAGE_URI
+
+      - echo "Substituting environment variables into SAM template..."
+      - envsubst < "template.yaml" > template-processed.yaml
+
+      - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
       - echo "Packaging SAM template..."
-      - sam package --s3-bucket buildxup-deployment-artifacts-12345 --output-template-file packaged.yaml
+      - |
+          sam package \
+            --template-file template-processed.yaml \
+            --s3-bucket "buildxup-delopyment-stage" \
+            --s3-prefix "backend" \
+            --image-repository "$ECR_REPO_URI" \
+            --output-template-file "artifact.yaml"
 
       - echo "Build completed on $(date)"
 
-  post_build:
-    commands:
-      - echo "Deploying SAM application..."
-      - |
-          # Try deployment with retry logic
-          MAX_RETRIES=3
-          RETRY_COUNT=0
-          
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              echo "Deployment attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES"
-              
-              if sam deploy --template-file packaged.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset; then
-                  echo "Deployment successful!"
-                  break
-              else
-                  RETRY_COUNT=$((RETRY_COUNT + 1))
-                  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                      echo "Deployment failed. Retrying in 60 seconds..."
-                      sleep 60
-                  else
-                      echo "Main template deployment failed. Trying backup template..."
-                      # Try with backup template
-                      cp template-backup.yaml template.yaml
-                      sam build
-                      sam package --s3-bucket buildxup-deployment-artifacts-12345 --output-template-file packaged-backup.yaml
-                      sam deploy --template-file packaged-backup.yaml --stack-name buildxup-backend-stage --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
-                  fi
-              fi
-          done
-
 artifacts:
   files:
-    - template.yaml
-    - packaged.yaml
-    - template-backup.yaml
+    - template-processed.yaml
+    - artifact.yaml
