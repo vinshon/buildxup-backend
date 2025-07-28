@@ -87,22 +87,6 @@ Parameters:
     Type: String
     Default: ${DatabaseSchema}
     Description: Database schema
-  AwsAccessKeyId:
-    Type: String
-    Default: ${AWSAccessKeyID}
-    Description: AWS Access Key ID
-  AwsSecretAccessKey:
-    Type: String
-    Default: ${AWSSecretAccessKey}
-    Description: AWS Secret Access Key
-  AwsS3BucketName:
-    Type: String
-    Default: ${AWSS3BucketName}
-    Description: AWS S3 bucket name
-  AwsRegion:
-    Type: String
-    Default: ${AWSRegion}
-    Description: AWS region
   TestEmail:
     Type: String
     Default: ${TestEmail}
@@ -135,10 +119,7 @@ Globals:
         DB_PASSWORD: !Ref DatabasePassword
         DB_NAME: !Ref DatabaseName
         DB_SCHEMA: !Ref DatabaseSchema
-        AWS_ACCESS_KEY_ID: !Ref AwsAccessKeyId
-        AWS_SECRET_ACCESS_KEY: !Ref AwsSecretAccessKey
-        AWS_S3_BUCKET_NAME: !Ref AwsS3BucketName
-        AWS_REGION: !Ref AwsRegion
+        AWS_S3_BUCKET_NAME: buildxup-images
         TEST_EMAIL: !Ref TestEmail
 
 ### --------------------- API GATEWAY ----------------------- ###
