@@ -7,10 +7,6 @@ Parameters:
     Type: String
     Default: ${Stage}
     Description: stage
-  ImageUri:
-    Type: String
-    Default: ${IMAGE_URI}
-    Description: Docker image URI for the Lambda function
   DatabaseUrl:
     Type: String
     Default: ${DatabaseUrl}
@@ -141,7 +137,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Ref ImageUri
+      ImageUri: ${IMAGE_URI}
       ImageConfig:
         Command: ["dist/module_auth/auth.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -158,7 +154,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Ref ImageUri
+      ImageUri: ${IMAGE_URI}
       ImageConfig:
         Command: ["dist/module_task/task.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -175,7 +171,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Ref ImageUri
+      ImageUri: ${IMAGE_URI}
       ImageConfig:
         Command: ["dist/module_project/project.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -192,7 +188,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Ref ImageUri
+      ImageUri: ${IMAGE_URI}
       ImageConfig:
         Command: ["dist/module_employee/employee.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
