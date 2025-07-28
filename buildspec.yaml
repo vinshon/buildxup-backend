@@ -57,8 +57,14 @@ phases:
       - echo "Pushing image to ECR..."
       - docker push $IMAGE_URI
 
+      - echo "Checking template.yaml exists..."
+      - ls -la template.yaml
+
       - echo "Substituting environment variables into SAM template..."
       - envsubst < "template.yaml" > template-processed.yaml
+
+      - echo "Checking processed template exists..."
+      - ls -la template-processed.yaml
 
       - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
@@ -71,9 +77,14 @@ phases:
             --image-repository "$ECR_REPO_URI" \
             --output-template-file "artifact.yaml"
 
+      - echo "Checking artifact.yaml exists..."
+      - ls -la artifact.yaml
+
       - echo "Build completed on $(date)"
 
 artifacts:
   files:
+    - template.yaml
     - template-processed.yaml
     - artifact.yaml
+    - dist/**/*
