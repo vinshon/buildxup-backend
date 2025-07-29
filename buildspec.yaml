@@ -43,15 +43,9 @@ phases:
       - npm run build
 
       - echo "Verifying and creating S3 bucket/prefix if necessary..."
-      - |
-        if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q 'NoSuchBucket'; then
-          aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"
-        fi
+      - if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q 'NoSuchBucket'; then aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"; fi
 
-      - |
-        if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then
-          aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"
-        fi
+      - if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"; fi
 
       - echo "Preparing Docker image for Lambda..."
       - export ECR_REPO="stage/buildxup/backend"
@@ -82,13 +76,7 @@ phases:
       - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
       - echo "Packaging SAM template..."
-      - |
-        sam package \
-          --template-file template-processed.yaml \
-          --s3-bucket "buildxup-delopyment-stage" \
-          --s3-prefix "backend" \
-          --image-repository "$ECR_REPO_URI" \
-          --output-template-file "artifact.yaml"
+      - sam package --template-file template-processed.yaml --s3-bucket "buildxup-delopyment-stage" --s3-prefix "backend" --image-repository "$ECR_REPO_URI" --output-template-file "artifact.yaml"
 
       - echo "Checking artifact.yaml exists..."
       - ls -la artifact.yaml
