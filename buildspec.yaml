@@ -17,8 +17,17 @@ phases:
       - echo "Downloading environment file from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/.env" .
 
+      - echo "Checking .env file exists and content..."
+      - ls -la .env
+      - echo "First few lines of .env file:"
+      - head -5 .env
+
       - echo "Exporting env variables from .env..."
       - export $(cat .env | grep -v '^#' | xargs)
+
+      - echo "Checking if DATABASE_URL is set..."
+      - echo "DATABASE_URL: $DATABASE_URL"
+      - echo "DATABASE_URL length: ${#DATABASE_URL}"
 
       - echo "Fetching Dockerfile from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" .
@@ -66,6 +75,9 @@ phases:
 
       - echo "Checking processed template exists..."
       - ls -la template-processed.yaml
+
+      - echo "Checking if DATABASE_URL was substituted correctly..."
+      - grep "DATABASE_URL" template-processed.yaml
 
       - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
