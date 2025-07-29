@@ -17,13 +17,13 @@ phases:
       - echo "Downloading environment file from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/.env" .
 
+      - echo "Exporting env variables from .env..."
+      - export $(cat .env | grep -v '^#' | xargs)
+
       - echo "Fetching Dockerfile from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" .
 
-      - echo "Installing dependencies..."
-      - npm install
-
-      - echo "Installing source NPM dependencies ..."
+      - echo "Installing source NPM dependencies..."
       - npm ci
 
       - echo "Generating Prisma client for all schemas..."
@@ -35,13 +35,14 @@ phases:
 
       - echo "Verifying and creating S3 bucket/prefix if necessary..."
       - |
-          if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q 'NoSuchBucket'; then
-              aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"
-          fi
+        if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q 'NoSuchBucket'; then
+          aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"
+        fi
 
-          if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then
-              aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"
-          fi
+      - |
+        if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then
+          aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"
+        fi
 
       - echo "Preparing Docker image for Lambda..."
       - export ECR_REPO="stage/buildxup/backend"
@@ -50,7 +51,7 @@ phases:
 
       - echo "Logging into ECR..."
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
-      
+
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI .
 
@@ -70,12 +71,12 @@ phases:
 
       - echo "Packaging SAM template..."
       - |
-          sam package \
-            --template-file template-processed.yaml \
-            --s3-bucket "buildxup-delopyment-stage" \
-            --s3-prefix "backend" \
-            --image-repository "$ECR_REPO_URI" \
-            --output-template-file "artifact.yaml"
+        sam package \
+          --template-file template-processed.yaml \
+          --s3-bucket "buildxup-delopyment-stage" \
+          --s3-prefix "backend" \
+          --image-repository "$ECR_REPO_URI" \
+          --output-template-file "artifact.yaml"
 
       - echo "Checking artifact.yaml exists..."
       - ls -la artifact.yaml

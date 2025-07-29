@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: BuildXup Backend API - Backup Template
-  
+
 Parameters:
   Stage:
     Type: String
@@ -87,8 +87,7 @@ Parameters:
     Type: String
     Default: ${TestEmail}
     Description: Test email address
-   
-### --------------------- Lambda Configuration ----------------------- ###
+
 Globals:
   Function:
     Timeout: 100
@@ -118,7 +117,6 @@ Globals:
         AWS_S3_BUCKET_NAME: buildxup-images
         TEST_EMAIL: !Ref TestEmail
 
-### --------------------- API GATEWAY ----------------------- ###
 Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
@@ -131,13 +129,13 @@ Resources:
         AllowMethods: "'*'"
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
- 
-  # --------------------- Function for Authentication ---------------------- #
+
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: ${IMAGE_URI}
+      # Hard-coded example URI below—change the tag if necessary
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_auth/auth.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -149,12 +147,11 @@ Resources:
             Method: any
             RestApiId: !Ref ApiGateway
 
-  # --------------------- Function for Task Management ---------------------- #
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: ${IMAGE_URI}
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_task/task.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -166,12 +163,11 @@ Resources:
             Method: any
             RestApiId: !Ref ApiGateway
 
-  # --------------------- Function for Project Management ---------------------- #
   ProjectFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: ${IMAGE_URI}
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_project/project.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -183,12 +179,11 @@ Resources:
             Method: any
             RestApiId: !Ref ApiGateway
 
-  # --------------------- Function for Employee Management ---------------------- #
   EmployeeFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: ${IMAGE_URI}
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_employee/employee.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -199,10 +194,9 @@ Resources:
             Path: /employees/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
-  #--------------------------------------------------------------------------#
+
 Outputs:
   ApiUrl:
     Description: "API Gateway endpoint URL"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.us-east-1.amazonaws.com/${Stage}/"
-  #--------------------------------------------------------------------------#
