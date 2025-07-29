@@ -163,6 +163,28 @@ Resources:
             Method: any
             RestApiId: !Ref ApiGateway
 
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
+      ImageConfig:
+        Command: ["dist/module_health/health.handler"]
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Events:
+        Ping:
+          Type: Api
+          Properties:
+            Path: /server/ping
+            Method: get
+            RestApiId: !Ref ApiGateway
+        PingDb:
+          Type: Api
+          Properties:
+            Path: /server/ping-db
+            Method: get
+            RestApiId: !Ref ApiGateway
+
   ProjectFunction:
     Type: AWS::Serverless::Function
     Properties:
