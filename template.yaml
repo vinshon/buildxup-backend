@@ -3,9 +3,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: BuildXup Backend API - Backup Template
 
 Parameters:
+  # Stage parameter with fixed default 'dev'
   Stage:
     Type: String
-    Default: ${Stage}
+    Default: dev
     Description: stage
   DatabaseUrl:
     Type: String
@@ -121,7 +122,7 @@ Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref Stage
+      StageName: dev   # Hard-coded stage name
       EndpointConfiguration: REGIONAL
       BinaryMediaTypes:
         - "*/*"
@@ -134,7 +135,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      # Hard-coded example URI below—change the tag if necessary
       ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_auth/auth.handler"]
@@ -199,4 +199,4 @@ Outputs:
   ApiUrl:
     Description: "API Gateway endpoint URL"
     Value:
-      Fn::Sub: "https://${ApiGateway}.execute-api.us-east-1.amazonaws.com/${Stage}/"
+      Fn::Sub: "https://${ApiGateway}.execute-api.us-east-1.amazonaws.com/dev/"
