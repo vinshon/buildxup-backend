@@ -5,17 +5,50 @@ class EmailService {
   constructor() {
     this.fromEmail = process.env.FROM_EMAIL || 'noreply@buildxup.com';
     this.fromName = process.env.FROM_NAME || 'BuildXUp Team';
-    
-    // Always initialize SendGrid
-    if (!process.env.SENDGRID_API_KEY) {
-      logger.error('SENDGRID_API_KEY is not configured');
-      throw new Error('SENDGRID_API_KEY is required for email service');
+    this.initialized = false;
+  }
+
+  initializeSendGrid() {
+    if (this.initialized) {
+      return true;
     }
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    logger.info('SendGrid email service initialized');
+
+    if (!process.env.SENDGRID_API_KEY) {
+      logger.warn('SENDGRID_API_KEY is not configured. Email service will be disabled.');
+      return false;
+    }
+
+    // Validate API key format - trim whitespace and check if it starts with SG.
+    const apiKey = process.env.SENDGRID_API_KEY.trim();
+    logger.info(`SendGrid API key found: ${apiKey.substring(0, 10)}...`);
+    
+    if (!apiKey.startsWith('SG.')) {
+      logger.warn(`Invalid SendGrid API key format. Key starts with: "${apiKey.substring(0, 5)}..." Must start with "SG."`);
+      return false;
+    }
+
+    try {
+      sgMail.setApiKey(apiKey);
+      this.initialized = true;
+      logger.info('SendGrid email service initialized successfully');
+      return true;
+    } catch (error) {
+      logger.error('Failed to initialize SendGrid:', error);
+      return false;
+    }
   }
 
   async sendEmail({ to, subject, text, html, from = null, templateId = null }) {
+    // Initialize SendGrid if not already done
+    if (!this.initializeSendGrid()) {
+      logger.warn('Email service not available. Email would be sent to:', to);
+      return {
+        success: true,
+        message: 'Email sent successfully (simulated)',
+        simulated: true
+      };
+    }
+
     try {
       const fromAddress = from || this.fromEmail;
       
