@@ -96,13 +96,7 @@ phases:
 
       # Package SAM template
       - echo "Packaging SAM template..."
-      - |
-        sam package \
-          --template-file template-processed.yaml \
-          --s3-bucket "buildxup-delopyment-stage" \
-          --s3-prefix "backend" \
-          --image-repository "$ECR_REPO_URI" \
-          --output-template-file "artifact.yaml"
+      - sam package --template-file template-processed.yaml --s3-bucket "buildxup-delopyment-stage" --s3-prefix "backend" --image-repository "$ECR_REPO_URI" --output-template-file "artifact.yaml"
 
       # Check packaged artifact.yaml presence
       - echo "Checking artifact.yaml exists..."
