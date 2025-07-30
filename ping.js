@@ -84,6 +84,7 @@ exports.handler = async (event) => {
 
 // Database ping handler
 exports.pingDb = async (event) => {
+  console.log('pingDb', process.env.DATABASE_URL);
   try {
     // Test database connection
     await prisma.$queryRaw`SELECT 1`;
