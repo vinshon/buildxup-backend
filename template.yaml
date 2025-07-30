@@ -137,7 +137,7 @@ Resources:
       PackageType: Image
       ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
-        Command: ["dist/module_auth/auth.handler"]
+        Command: ["dist/module_auth.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         AuthApi:
@@ -153,7 +153,7 @@ Resources:
       PackageType: Image
       ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
-        Command: ["dist/module_task/task.handler"]
+        Command: ["dist/module_task.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         TaskApi:
@@ -191,7 +191,7 @@ Resources:
       PackageType: Image
       ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
-        Command: ["dist/module_project/project.handler"]
+        Command: ["dist/module_project.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         ProjectApi:
@@ -207,7 +207,7 @@ Resources:
       PackageType: Image
       ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
-        Command: ["dist/module_employee/employee.handler"]
+        Command: ["dist/module_employee.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         EmployeeApi:
