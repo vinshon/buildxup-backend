@@ -94,7 +94,7 @@ phases:
       # Define ECR repository URI for SAM packaging
       - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
-      # Package SAM template
+      # Package SAM template (single-line command)
       - echo "Packaging SAM template..."
       - sam package --template-file template-processed.yaml --s3-bucket "buildxup-delopyment-stage" --s3-prefix "backend" --image-repository "$ECR_REPO_URI" --output-template-file "artifact.yaml"
 
