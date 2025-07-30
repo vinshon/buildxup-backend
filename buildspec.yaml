@@ -19,9 +19,19 @@ phases:
 
       - echo "Exporting env variables from .env..."
       - export $(cat .env | grep -v '^#' | xargs)
+      - export DeploymentTimestamp=$(date +%Y%m%d-%H%M%S)
+      - echo "Verifying critical environment variables..."
+      - echo "SENDGRID_API_KEY: ${SENDGRID_API_KEY:0:10}..."
+      - echo "DeploymentTimestamp: $DeploymentTimestamp"
 
       - echo "Fetching Dockerfile from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" .
+      - echo "Dockerfile contents:"
+      - cat Dockerfile
+
+      - echo "Cleaning up any existing Docker images to prevent caching..."
+      - docker system prune -f || true
+      - docker rmi $(docker images -q 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest) 2>/dev/null || true
 
       - echo "Installing source NPM dependencies..."
       - npm ci
@@ -32,6 +42,13 @@ phases:
       - echo "Running app build to generate dist folder..."
       - export NODE_OPTIONS="--max_old_space_size=4096"
       - npm run build
+
+      - echo "Verifying dist folder contents..."
+      - ls -la dist/
+      - echo "Checking if module_auth.js was updated..."
+      - ls -la dist/module_auth.js
+      - echo "File size and timestamp:"
+      - stat dist/module_auth.js
 
       - echo "Verifying and creating S3 bucket/prefix if necessary..."
       - |
@@ -46,17 +63,23 @@ phases:
 
       - echo "Preparing Docker image for Lambda..."
       - export ECR_REPO="stage/buildxup/backend"
-      - export IMAGE_TAG=$(echo latest | cut -c 1-7)
+      - export IMAGE_TAG=$(date +%Y%m%d-%H%M%S)
       - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:$IMAGE_TAG"
 
       - echo "Logging into ECR..."
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
 
       - echo "Building Docker image..."
-      - docker build -t $IMAGE_URI .
+      - echo "Docker build context contents:"
+      - ls -la dist/
+      - docker build --no-cache -t $IMAGE_URI .
 
       - echo "Pushing image to ECR..."
       - docker push $IMAGE_URI
+
+      - echo "Also tagging as latest for template compatibility..."
+      - docker tag $IMAGE_URI 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
+      - docker push 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
 
       - echo "Checking template.yaml exists..."
       - ls -la template.yaml
@@ -80,6 +103,15 @@ phases:
 
       - echo "Checking artifact.yaml exists..."
       - ls -la artifact.yaml
+
+      - echo "Deploying SAM template..."
+      - |
+        sam deploy \
+          --template-file artifact.yaml \
+          --stack-name buildxup-backend \
+          --capabilities CAPABILITY_IAM \
+          --region us-east-1 \
+          --no-fail-on-empty-changeset
 
       - echo "Build completed on $(date)"
 
