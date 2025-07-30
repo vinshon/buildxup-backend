@@ -88,10 +88,6 @@ Parameters:
     Type: String
     Default: ${TestEmail}
     Description: Test email address
-  DeploymentTimestamp:
-    Type: String
-    Default: ${DeploymentTimestamp}
-    Description: Deployment timestamp for Lambda function updates
 
 Globals:
   Function:
@@ -121,7 +117,6 @@ Globals:
         DB_SCHEMA: !Ref DatabaseSchema
         AWS_S3_BUCKET_NAME: buildxup-images
         TEST_EMAIL: !Ref TestEmail
-        DEPLOYMENT_TIMESTAMP: !Ref DeploymentTimestamp
 
 Resources:
   ApiGateway:
