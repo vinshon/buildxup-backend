@@ -14,61 +14,87 @@ phases:
     commands:
       - echo "Build started on $(date)"
 
+      # Download .env from S3
       - echo "Downloading environment file from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/.env" .
 
+      # Check .env content briefly
+      - echo "Checking .env file exists and content..."
+      - ls -la .env
+      - echo "First few lines of .env file:"
+      - head -5 .env
+      - grep DATABASE_URL .env
+
+      # Export env variables from .env
       - echo "Exporting env variables from .env..."
       - export $(cat .env | grep -v '^#' | xargs)
 
+      # Debug: print DATABASE_URL to verify export
+      - echo "DATABASE_URL environment variable:"
+      - echo "$DATABASE_URL"
+      - echo "Length of DATABASE_URL: ${#DATABASE_URL}"
+
+      # Fetch Dockerfile from S3
       - echo "Fetching Dockerfile from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" .
 
+      # Install NPM dependencies
       - echo "Installing source NPM dependencies..."
       - npm ci
 
+      # Generate Prisma client
       - echo "Generating Prisma client for all schemas..."
       - npm run prisma:all:generate
 
+      # Build application output
       - echo "Running app build to generate dist folder..."
       - export NODE_OPTIONS="--max_old_space_size=4096"
       - npm run build
 
-      - echo "Verifying and creating S3 bucket/prefix if necessary..."
-      - |
-        if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q 'NoSuchBucket'; then
-          aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"
-        fi
+      # Verify and create S3 bucket if missing
+      - 'if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "NoSuchBucket"; then aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"; fi'
 
-      - |
-        if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then
-          aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"
-        fi
+      # Verify and create S3 prefix if missing
+      - 'if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"; fi'
 
+      # Prepare Docker image variables
       - echo "Preparing Docker image for Lambda..."
       - export ECR_REPO="stage/buildxup/backend"
       - export IMAGE_TAG=$(echo latest | cut -c 1-7)
       - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:$IMAGE_TAG"
 
+      # Log in to Amazon ECR
       - echo "Logging into ECR..."
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
 
+      # Build Docker image
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI .
 
+      # Push Docker image to ECR
       - echo "Pushing image to ECR..."
       - docker push $IMAGE_URI
 
+      # Sanity check: template.yaml presence
       - echo "Checking template.yaml exists..."
       - ls -la template.yaml
 
+      # Substitute environment variables in SAM template
       - echo "Substituting environment variables into SAM template..."
       - envsubst < "template.yaml" > template-processed.yaml
 
+      # Check processed template file presence
       - echo "Checking processed template exists..."
       - ls -la template-processed.yaml
 
+      # Verify DATABASE_URL substituted correctly
+      - echo "Checking if DATABASE_URL was substituted correctly..."
+      - grep "DATABASE_URL" template-processed.yaml || echo "DATABASE_URL not found in processed template!"
+
+      # Define ECR repository URI for SAM packaging
       - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
+      # Package SAM template
       - echo "Packaging SAM template..."
       - |
         sam package \
@@ -78,6 +104,7 @@ phases:
           --image-repository "$ECR_REPO_URI" \
           --output-template-file "artifact.yaml"
 
+      # Check packaged artifact.yaml presence
       - echo "Checking artifact.yaml exists..."
       - ls -la artifact.yaml
 
