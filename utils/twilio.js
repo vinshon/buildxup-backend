@@ -3,8 +3,38 @@ const emailService = require('./email');
 require('dotenv').config();
 const twilio = require('twilio');
 
-// Load environment variables
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+// Lazy initialization of Twilio client
+let twilioClient = null;
+
+function getTwilioClient() {
+  if (twilioClient) {
+    return twilioClient;
+  }
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  // Check if Twilio credentials are properly configured
+  if (!accountSid || !authToken) {
+    logger.warn('Twilio credentials not configured. SMS OTP will be simulated.');
+    return null;
+  }
+
+  // Validate Account SID format
+  if (!accountSid.startsWith('AC')) {
+    logger.error('Invalid Twilio Account SID format. Must start with "AC"');
+    return null;
+  }
+
+  try {
+    twilioClient = twilio(accountSid, authToken);
+    logger.info('Twilio client initialized successfully');
+    return twilioClient;
+  } catch (error) {
+    logger.error('Failed to initialize Twilio client:', error);
+    return null;
+  }
+}
 
 // Function to send Email OTP
 async function sendEmailOTP(email, otpCode) {
@@ -20,7 +50,9 @@ async function sendEmailOTP(email, otpCode) {
 
 // Function to send SMS OTP
 async function sendSMSOTP(phoneNumber, otpCode) {
-  if (!twilioClient) {
+  const client = getTwilioClient();
+  
+  if (!client) {
     logger.info(`[SIMULATED] OTP ${otpCode} would be sent to ${phoneNumber}`);
     return {
       success: true,
@@ -30,7 +62,7 @@ async function sendSMSOTP(phoneNumber, otpCode) {
   }
 
   try {
-    const message = await twilioClient.messages.create({
+    const message = await client.messages.create({
       body: `Your BuildXUp OTP is ${otpCode}. This code will expire in 10 minutes.`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: phoneNumber

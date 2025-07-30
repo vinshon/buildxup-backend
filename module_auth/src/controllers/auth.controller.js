@@ -1,7 +1,8 @@
 const prisma = require('../../../config/prisma');
 const bcrypt = require('bcryptjs');
 const { generateToken, generateRefreshToken } = require('../../../utils/jwt');
-const { sendSMSOTP, sendEmailOTP } = require('../../../utils/twilio');
+// const { sendSMSOTP, sendEmailOTP } = require('../../../utils/twilio');
+const { sendEmailOTP } = require('../../../utils/twilio');
 const emailService = require('../../../utils/email');
 const { responses } = require('../../../utils/response');
 const logger = require('../../../utils/logger');
@@ -17,9 +18,11 @@ async function tempOTP({ email, phone }) {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpResult = email ?
-      await sendEmailOTP(email, otp) :
-      await sendSMSOTP(phone, otp);
+    // const otpResult = email ?
+    //   await sendEmailOTP(email, otp) :
+    //   await sendSMSOTP(phone, otp);
+
+    const otpResult = await sendEmailOTP(email, otp);
 
     if (!otpResult) {
       return responses.otpSendFailed();
