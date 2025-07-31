@@ -71,16 +71,6 @@ phases:
       - echo "Checking artifact.yaml exists..."
       - ls -la artifact.yaml
 
-
-      - echo "Deploying SAM app to Lambda..."
-      - |
-        sam deploy \
-          --template-file artifact.yaml \
-          --stack-name buildxup-backend \
-          --capabilities CAPABILITY_IAM \
-          --region us-east-1 \
-          --no-fail-on-empty-changeset
-
       - echo "Build completed on $(date)"
 
 artifacts:
