@@ -57,13 +57,19 @@ phases:
       - export IMAGE_URI=$IMAGE_URI
       - envsubst < template.yaml > template-processed.yaml
 
+      - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
+
       - echo "Packaging SAM template..."
-      - sam package \
+      - |
+        sam package \
           --template-file template-processed.yaml \
           --s3-bucket "buildxup-delopyment-stage" \
           --s3-prefix "backend" \
-          --image-repository "530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend" \
-          --output-template-file artifact.yaml
+          --image-repository "$ECR_REPO_URI" \
+          --output-template-file "artifact.yaml"
+
+      - echo "Checking artifact.yaml exists..."
+      - ls -la artifact.yaml
 
 
       - echo "Deploying SAM app to Lambda..."
