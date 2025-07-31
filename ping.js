@@ -60,7 +60,7 @@ exports.handler = async (event) => {
           'Access-Control-Allow-Credentials': true,
         },
         body: JSON.stringify({
-          message: 'Server is running',
+          message: 'Server is running successfully',
           timestamp: new Date().toISOString()
         })
       };
@@ -97,7 +97,7 @@ exports.pingDb = async (event) => {
         'Access-Control-Allow-Credentials': true,
       },
       body: JSON.stringify({
-        message: 'Database connection successful',
+        message: 'Database',
         timestamp: new Date().toISOString()
       })
     };
