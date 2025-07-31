@@ -1,9 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: BuildXup Backend API - Backup Template
+Description: BuildXup Backend API - Updated Template
 
 Parameters:
-  # Stage parameter with fixed default 'dev'
   Stage:
     Type: String
     Default: dev
@@ -122,7 +121,7 @@ Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: dev   # Hard-coded stage name
+      StageName: dev
       EndpointConfiguration: REGIONAL
       BinaryMediaTypes:
         - "*/*"
@@ -135,7 +134,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
       ImageConfig:
         Command: ["dist/module_auth.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -151,7 +150,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
       ImageConfig:
         Command: ["dist/module_task.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -167,7 +166,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
       ImageConfig:
         Command: ["dist/ping.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -189,7 +188,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
       ImageConfig:
         Command: ["dist/module_project.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
@@ -205,7 +204,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
       ImageConfig:
         Command: ["dist/module_employee.handler"]
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role

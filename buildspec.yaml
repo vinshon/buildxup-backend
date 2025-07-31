@@ -5,10 +5,16 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
-      - echo "Nothing to do in the install phase"
+      - echo "Nothing to do in install phase"
       - echo "Starting Docker daemon..."
       - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock &
       - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
+      - docker version || exit 1
+      - echo "Cleaning Docker builder cache..."
+      - docker builder prune -f
+
+      - echo "Cleaning old Docker images to free up space..."
+      - docker image prune -f
 
   build:
     commands:
@@ -21,33 +27,22 @@ phases:
       - export $(cat .env | grep -v '^#' | xargs)
 
       - echo "Fetching Dockerfile from S3..."
-      - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" .
+      - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" ./Dockerfile
 
-      - echo "Installing source NPM dependencies..."
+      - echo "Installing NPM dependencies..."
       - npm ci
 
-      - echo "Generating Prisma client for all schemas..."
+      - echo "Generating Prisma client..."
       - npm run prisma:all:generate
 
-      - echo "Running app build to generate dist folder..."
+      - echo "Running build to generate dist/"
       - export NODE_OPTIONS="--max_old_space_size=4096"
       - npm run build
 
-      - echo "Verifying and creating S3 bucket/prefix if necessary..."
-      - |
-        if aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q 'NoSuchBucket'; then
-          aws s3 mb "s3://buildxup-delopyment-stage" --region "us-east-1"
-        fi
-
-      - |
-        if ! aws s3 ls "s3://buildxup-delopyment-stage" 2>&1 | grep -q "PRE backend/"; then
-          aws s3api put-object --bucket "buildxup-delopyment-stage" --key "backend/"
-        fi
-
       - echo "Preparing Docker image for Lambda..."
+      - export IMAGE_TAG=$(date +%s)
       - export ECR_REPO="stage/buildxup/backend"
-      - export IMAGE_TAG=$(echo latest | cut -c 1-7)
-      - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:$IMAGE_TAG"
+      - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO:$IMAGE_TAG"
 
       - echo "Logging into ECR..."
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
@@ -55,31 +50,28 @@ phases:
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI .
 
-      - echo "Pushing image to ECR..."
+      - echo "Pushing Docker image to ECR..."
       - docker push $IMAGE_URI
 
-      - echo "Checking template.yaml exists..."
-      - ls -la template.yaml
-
-      - echo "Substituting environment variables into SAM template..."
-      - envsubst < "template.yaml" > template-processed.yaml
-
-      - echo "Checking processed template exists..."
-      - ls -la template-processed.yaml
-
-      - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
+      - echo "Substituting env vars into SAM template..."
+      - export IMAGE_URI=$IMAGE_URI
+      - envsubst < template.yaml > template-processed.yaml
 
       - echo "Packaging SAM template..."
-      - |
-        sam package \
+      - sam package \
           --template-file template-processed.yaml \
           --s3-bucket "buildxup-delopyment-stage" \
           --s3-prefix "backend" \
-          --image-repository "$ECR_REPO_URI" \
-          --output-template-file "artifact.yaml"
+          --image-repository "530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend" \
+          --output-template-file artifact.yaml
 
-      - echo "Checking artifact.yaml exists..."
-      - ls -la artifact.yaml
+      - echo "Deploying SAM app to Lambda..."
+      - sam deploy \
+          --template-file artifact.yaml \
+          --stack-name buildxup-backend \
+          --capabilities CAPABILITY_IAM \
+          --region us-east-1 \
+          --no-fail-on-empty-changeset
 
       - echo "Build completed on $(date)"
 
