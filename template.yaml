@@ -177,6 +177,10 @@ Resources:
             Path: /auth/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: .
+      DockerTag: latest
 
   TaskFunction:
     Type: AWS::Serverless::Function
@@ -193,6 +197,10 @@ Resources:
             Path: /tasks/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: .
+      DockerTag: latest
 
   HealthFunction:
     Type: AWS::Serverless::Function
@@ -215,6 +223,10 @@ Resources:
             Path: /server/ping-db
             Method: get
             RestApiId: !Ref ApiGateway
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: .
+      DockerTag: latest
 
   ProjectFunction:
     Type: AWS::Serverless::Function
@@ -231,6 +243,10 @@ Resources:
             Path: /projects/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: .
+      DockerTag: latest
 
   EmployeeFunction:
     Type: AWS::Serverless::Function
@@ -247,6 +263,10 @@ Resources:
             Path: /employees/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: .
+      DockerTag: latest
 
 Outputs:
   ApiUrl:
