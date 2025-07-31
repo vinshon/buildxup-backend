@@ -73,7 +73,8 @@ phases:
 
 
       - echo "Deploying SAM app to Lambda..."
-      - sam deploy \
+      - |
+        sam deploy \
           --template-file artifact.yaml \
           --stack-name buildxup-backend \
           --capabilities CAPABILITY_IAM \
