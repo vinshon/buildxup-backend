@@ -78,7 +78,7 @@ phases:
           --capabilities CAPABILITY_IAM \
           --region us-east-1 \
           --no-fail-on-empty-changeset \
-          --image-repositories AuthFunction=$ECR_REPO_URI,TaskFunction=$ECR_REPO_URI,HealthFunction=$ECR_REPO_URI,ProjectFunction=$ECR_REPO_URI,EmployeeFunction=$ECR_REPO_URI \
+          --resolve-image-repos \
           --parameter-overrides \
             ImageRepository=530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend \
             ImageTag=$IMAGE_TAG \
