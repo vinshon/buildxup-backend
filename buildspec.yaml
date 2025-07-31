@@ -73,15 +73,21 @@ phases:
 
       - |
         sam deploy \
-        --template-file artifact.yaml \
-        --stack-name buildxup-backend \
-        --capabilities CAPABILITY_IAM \
-        --region us-east-1 \
-        --no-fail-on-empty-changeset \
-        --parameter-overrides \
-          ImageRepository=530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend \
-          ImageTag=$IMAGE_TAG \
-          LambdaExecutionRoleArn=arn:aws:iam::530061243896:role/Lambda_Execution_Role
+          --template-file artifact.yaml \
+          --stack-name buildxup-backend \
+          --capabilities CAPABILITY_IAM \
+          --region us-east-1 \
+          --no-fail-on-empty-changeset \
+          --image-repositories \
+            AuthFunction=$ECR_REPO_URI \
+            TaskFunction=$ECR_REPO_URI \
+            HealthFunction=$ECR_REPO_URI \
+            ProjectFunction=$ECR_REPO_URI \
+            EmployeeFunction=$ECR_REPO_URI
+          --parameter-overrides \
+            ImageRepository=530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend \
+            ImageTag=$IMAGE_TAG \
+            LambdaExecutionRoleArn=arn:aws:iam::530061243896:role/Lambda_Execution_Role
 
 
       - echo "Build completed on $(date)"
