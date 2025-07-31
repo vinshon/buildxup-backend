@@ -79,6 +79,7 @@ phases:
           --region us-east-1 \
           --no-fail-on-empty-changeset \
           --resolve-image-repos \
+          --s3-bucket buildxup-codebuild-deploy-artifacts \
           --parameter-overrides \
             ImageRepository=530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend \
             ImageTag=$IMAGE_TAG \
