@@ -62,8 +62,9 @@ phases:
           --template-file template-processed.yaml \
           --s3-bucket "buildxup-delopyment-stage" \
           --s3-prefix "backend" \
-          --image-repository "530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend" \
+          --image-repositories "530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend" \
           --output-template-file artifact.yaml
+
 
       - echo "Deploying SAM app to Lambda..."
       - sam deploy \

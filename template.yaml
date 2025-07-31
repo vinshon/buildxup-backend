@@ -7,82 +7,114 @@ Parameters:
     Type: String
     Default: dev
     Description: stage
+
+  ImageRepository:
+    Type: String
+    Description: ECR image repository URI (without tag)
+
+  ImageTag:
+    Type: String
+    Description: Docker image tag
+
+  LambdaExecutionRoleArn:
+    Type: String
+    Description: IAM Role ARN to use for Lambda functions
+
   DatabaseUrl:
     Type: String
     Default: ${DatabaseUrl}
     Description: Database connection URL
+
   JwtSecret:
     Type: String
     Default: ${JwtSecret}
     Description: JWT secret key
+
   JwtExpiration:
     Type: String
     Default: ${JwtExpiration}
     Description: JWT expiration time
+
   SendgridApiKey:
     Type: String
     Default: ${SendgridApiKey}
     Description: SendGrid API key
+
   RefreshTokenSecret:
     Type: String
     Default: ${RefreshTokenSecret}
     Description: Refresh token secret
+
   TokenExpire:
     Type: String
     Default: ${TokenExpire}
     Description: Token expiration time
+
   RefreshTokenExpire:
     Type: String
     Default: ${RefreshTokenExpire}
     Description: Refresh token expiration time
+
   TwilioAccountSID:
     Type: String
     Default: ${TwilioAccountSID}
     Description: Twilio Account SID
+
   TwilioAuthToken:
     Type: String
     Default: ${TwilioAuthToken}
     Description: Twilio Auth Token
+
   TwilioPhoneNumber:
     Type: String
     Default: ${TwilioPhoneNumber}
     Description: Twilio phone number
+
   FromEmail:
     Type: String
     Default: ${FromEmail}
     Description: From email address
+
   FromName:
     Type: String
     Default: ${FromName}
     Description: From name
+
   FrontendUrl:
     Type: String
     Default: ${FrontendUrl}
     Description: Frontend URL
+
   DatabaseHost:
     Type: String
     Default: ${DatabaseHost}
     Description: Database host
+
   DatabasePort:
     Type: String
     Default: ${DatabasePort}
     Description: Database port
+
   DatabaseUser:
     Type: String
     Default: ${DatabaseUser}
     Description: Database user
+
   DatabasePassword:
     Type: String
     Default: ${DatabasePassword}
     Description: Database password
+
   DatabaseName:
     Type: String
     Default: ${DatabaseName}
     Description: Database name
+
   DatabaseSchema:
     Type: String
     Default: ${DatabaseSchema}
     Description: Database schema
+
   TestEmail:
     Type: String
     Default: ${TestEmail}
@@ -121,7 +153,7 @@ Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: dev
+      StageName: !Ref Stage
       EndpointConfiguration: REGIONAL
       BinaryMediaTypes:
         - "*/*"
@@ -134,10 +166,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
+      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
       ImageConfig:
         Command: ["dist/module_auth.handler"]
-      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Role: !Ref LambdaExecutionRoleArn
       Events:
         AuthApi:
           Type: Api
@@ -150,10 +182,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
+      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
       ImageConfig:
         Command: ["dist/module_task.handler"]
-      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Role: !Ref LambdaExecutionRoleArn
       Events:
         TaskApi:
           Type: Api
@@ -166,10 +198,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
+      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
       ImageConfig:
         Command: ["dist/ping.handler"]
-      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Role: !Ref LambdaExecutionRoleArn
       Events:
         Ping:
           Type: Api
@@ -188,10 +220,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
+      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
       ImageConfig:
         Command: ["dist/module_project.handler"]
-      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Role: !Ref LambdaExecutionRoleArn
       Events:
         ProjectApi:
           Type: Api
@@ -204,10 +236,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:${IMAGE_TAG}
+      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
       ImageConfig:
         Command: ["dist/module_employee.handler"]
-      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
+      Role: !Ref LambdaExecutionRoleArn
       Events:
         EmployeeApi:
           Type: Api
@@ -219,5 +251,24 @@ Resources:
 Outputs:
   ApiUrl:
     Description: "API Gateway endpoint URL"
-    Value:
-      Fn::Sub: "https://${ApiGateway}.execute-api.us-east-1.amazonaws.com/dev/"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
+
+  AuthApiUrl:
+    Description: "Auth API URL"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/auth/"
+
+  TaskApiUrl:
+    Description: "Task API URL"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/tasks/"
+
+  HealthApiUrl:
+    Description: "Health Check API URL"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/server/"
+
+  ProjectApiUrl:
+    Description: "Project API URL"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/projects/"
+
+  EmployeeApiUrl:
+    Description: "Employee API URL"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/employees/"
