@@ -60,7 +60,7 @@ exports.handler = async (event) => {
           'Access-Control-Allow-Credentials': true,
         },
         body: JSON.stringify({
-          message: 'Server is running successfully',
+          message: 'Server is running',
           timestamp: new Date().toISOString()
         })
       };
