@@ -28,14 +28,6 @@ phases:
       - rm -rf node_modules/.prisma/client/libquery_engine*
       - rm -rf node_modules/@prisma/engines
 
-      # - echo "Bundling Lambda handlers with esbuild..."
-      # - mkdir -p dist
-      # - npx esbuild src/module_auth.ts --bundle --platform=node --target=node20 --outfile=dist/module_auth.js
-      # - npx esbuild src/module_task.ts --bundle --platform=node --target=node20 --outfile=dist/module_task.js
-      # - npx esbuild src/module_project.ts --bundle --platform=node --target=node20 --outfile=dist/module_project.js
-      # - npx esbuild src/module_employee.ts --bundle --platform=node --target=node20 --outfile=dist/module_employee.js
-      # - npx esbuild src/ping.ts --bundle --platform=node --target=node20 --outfile=dist/ping.js
-
       - echo "Substituting env vars into SAM template..."
       - envsubst < template.yaml > template-processed.yaml
 
