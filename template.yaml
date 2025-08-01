@@ -91,6 +91,7 @@ Parameters:
 
 Globals:
   Function:
+    Runtime: nodejs20.x
     Timeout: 100
     MemorySize: 2048
     Environment:
