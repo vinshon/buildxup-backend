@@ -5,56 +5,39 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
-      - echo "Nothing to do in install phase"
-      - echo "Starting Docker daemon..."
-      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock &
-      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
-      - docker version || exit 1
-      - echo "Cleaning Docker builder cache..."
-      - docker builder prune -f
-
-      - echo "Cleaning old Docker images to free up space..."
-      - docker image prune -f
+      - echo "Install phase started"
+      - npm install -g esbuild
 
   build:
     commands:
       - echo "Build started on $(date)"
 
-      - echo "Downloading environment file from S3..."
+      - echo "Downloading .env from S3..."
       - aws s3 cp "s3://buildxup-delopyment-stage/backend/.env" .
 
-      - echo "Exporting env variables from .env..."
+      - echo "Exporting env variables..."
       - export $(cat .env | grep -v '^#' | xargs)
 
-      - echo "Installing NPM dependencies..."
-      - npm ci
+      - echo "Installing production-only dependencies..."
+      - npm ci --omit=dev
 
-      - echo "Generating Prisma client..."
-      - npm run prisma:all:generate
+      - echo "Generating Prisma client without engines..."
+      - npx prisma generate --no-engine
 
-      - echo "Running build to generate dist/"
-      - export NODE_OPTIONS="--max_old_space_size=4096"
-      - npm run build
+      - echo "Removing unnecessary Prisma binaries..."
+      - rm -rf node_modules/.prisma/client/libquery_engine*
+      - rm -rf node_modules/@prisma/engines
 
-      - echo "Preparing Docker image for Lambda..."
-      # - export IMAGE_TAG=$(date +%s)
-      - export ECR_REPO="stage/buildxup/backend"
-      - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO:latest"
-
-      - echo "Logging into ECR..."
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
-
-      # - echo "Building Docker image..."
-      # - docker build -t $IMAGE_URI .
-
-      # - echo "Pushing Docker image to ECR..."
-      # - docker push $IMAGE_URI
+      - echo "Bundling Lambda handlers with esbuild..."
+      - mkdir -p dist
+      - npx esbuild src/module_auth.ts --bundle --platform=node --target=node20 --outfile=dist/module_auth.js
+      - npx esbuild src/module_task.ts --bundle --platform=node --target=node20 --outfile=dist/module_task.js
+      - npx esbuild src/module_project.ts --bundle --platform=node --target=node20 --outfile=dist/module_project.js
+      - npx esbuild src/module_employee.ts --bundle --platform=node --target=node20 --outfile=dist/module_employee.js
+      - npx esbuild src/ping.ts --bundle --platform=node --target=node20 --outfile=dist/ping.js
 
       - echo "Substituting env vars into SAM template..."
-      # - export IMAGE_URI=$IMAGE_URI
       - envsubst < template.yaml > template-processed.yaml
-
-      # - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
       - echo "Packaging SAM template..."
       - |
@@ -64,7 +47,7 @@ phases:
           --s3-prefix "backend" \
           --output-template-file "artifact.yaml"
 
-      - echo "Checking artifact.yaml exists..."
+      - echo "Checking packaged artifact..."
       - ls -la artifact.yaml
 
       - echo "Build completed on $(date)"
