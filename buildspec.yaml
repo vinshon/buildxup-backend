@@ -26,9 +26,6 @@ phases:
       - echo "Exporting env variables from .env..."
       - export $(cat .env | grep -v '^#' | xargs)
 
-      - echo "Fetching Dockerfile from S3..."
-      - aws s3 cp "s3://buildxup-delopyment-stage/backend/Dockerfile" ./Dockerfile
-
       - echo "Installing NPM dependencies..."
       - npm ci
 
@@ -40,7 +37,7 @@ phases:
       - npm run build
 
       - echo "Preparing Docker image for Lambda..."
-      - export IMAGE_TAG=$(date +%s)
+      # - export IMAGE_TAG=$(date +%s)
       - export ECR_REPO="stage/buildxup/backend"
       - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO:latest"
 
@@ -65,7 +62,6 @@ phases:
           --template-file template-processed.yaml \
           --s3-bucket "buildxup-delopyment-stage" \
           --s3-prefix "backend" \
-          --image-repository "$ECR_REPO_URI" \
           --output-template-file "artifact.yaml"
 
       - echo "Checking artifact.yaml exists..."
