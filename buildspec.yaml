@@ -44,17 +44,17 @@ phases:
       - echo "Logging into ECR..."
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
 
-      - echo "Building Docker image..."
-      - docker build -t $IMAGE_URI .
+      # - echo "Building Docker image..."
+      # - docker build -t $IMAGE_URI .
 
-      - echo "Pushing Docker image to ECR..."
-      - docker push $IMAGE_URI
+      # - echo "Pushing Docker image to ECR..."
+      # - docker push $IMAGE_URI
 
       - echo "Substituting env vars into SAM template..."
-      - export IMAGE_URI=$IMAGE_URI
+      # - export IMAGE_URI=$IMAGE_URI
       - envsubst < template.yaml > template-processed.yaml
 
-      - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
+      # - export ECR_REPO_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend"
 
       - echo "Packaging SAM template..."
       - |
