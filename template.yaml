@@ -1,120 +1,89 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: BuildXup Backend API - Updated Template
+Description: BuildXup Backend API - Backup Template
 
 Parameters:
+  # Stage parameter with fixed default 'dev'
   Stage:
     Type: String
     Default: dev
     Description: stage
-
-  ImageRepository:
-    Type: String
-    Description: ECR image repository URI (without tag)
-
-  ImageTag:
-    Type: String
-    Description: Docker image tag
-
-  LambdaExecutionRoleArn:
-    Type: String
-    Description: IAM Role ARN to use for Lambda functions
-
   DatabaseUrl:
     Type: String
     Default: ${DatabaseUrl}
     Description: Database connection URL
-
   JwtSecret:
     Type: String
     Default: ${JwtSecret}
     Description: JWT secret key
-
   JwtExpiration:
     Type: String
     Default: ${JwtExpiration}
     Description: JWT expiration time
-
   SendgridApiKey:
     Type: String
     Default: ${SendgridApiKey}
     Description: SendGrid API key
-
   RefreshTokenSecret:
     Type: String
     Default: ${RefreshTokenSecret}
     Description: Refresh token secret
-
   TokenExpire:
     Type: String
     Default: ${TokenExpire}
     Description: Token expiration time
-
   RefreshTokenExpire:
     Type: String
     Default: ${RefreshTokenExpire}
     Description: Refresh token expiration time
-
   TwilioAccountSID:
     Type: String
     Default: ${TwilioAccountSID}
     Description: Twilio Account SID
-
   TwilioAuthToken:
     Type: String
     Default: ${TwilioAuthToken}
     Description: Twilio Auth Token
-
   TwilioPhoneNumber:
     Type: String
     Default: ${TwilioPhoneNumber}
     Description: Twilio phone number
-
   FromEmail:
     Type: String
     Default: ${FromEmail}
     Description: From email address
-
   FromName:
     Type: String
     Default: ${FromName}
     Description: From name
-
   FrontendUrl:
     Type: String
     Default: ${FrontendUrl}
     Description: Frontend URL
-
   DatabaseHost:
     Type: String
     Default: ${DatabaseHost}
     Description: Database host
-
   DatabasePort:
     Type: String
     Default: ${DatabasePort}
     Description: Database port
-
   DatabaseUser:
     Type: String
     Default: ${DatabaseUser}
     Description: Database user
-
   DatabasePassword:
     Type: String
     Default: ${DatabasePassword}
     Description: Database password
-
   DatabaseName:
     Type: String
     Default: ${DatabaseName}
     Description: Database name
-
   DatabaseSchema:
     Type: String
     Default: ${DatabaseSchema}
     Description: Database schema
-
   TestEmail:
     Type: String
     Default: ${TestEmail}
@@ -153,7 +122,7 @@ Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref Stage
+      StageName: dev   # Hard-coded stage name
       EndpointConfiguration: REGIONAL
       BinaryMediaTypes:
         - "*/*"
@@ -166,10 +135,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_auth.handler"]
-      Role: !Ref LambdaExecutionRoleArn
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         AuthApi:
           Type: Api
@@ -177,19 +146,15 @@ Resources:
             Path: /auth/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: .
-      DockerTag: latest
 
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_task.handler"]
-      Role: !Ref LambdaExecutionRoleArn
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         TaskApi:
           Type: Api
@@ -197,19 +162,15 @@ Resources:
             Path: /tasks/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: .
-      DockerTag: latest
 
   HealthFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/ping.handler"]
-      Role: !Ref LambdaExecutionRoleArn
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         Ping:
           Type: Api
@@ -223,19 +184,15 @@ Resources:
             Path: /server/ping-db
             Method: get
             RestApiId: !Ref ApiGateway
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: .
-      DockerTag: latest
 
   ProjectFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_project.handler"]
-      Role: !Ref LambdaExecutionRoleArn
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         ProjectApi:
           Type: Api
@@ -243,19 +200,15 @@ Resources:
             Path: /projects/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: .
-      DockerTag: latest
 
   EmployeeFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: !Sub "${ImageRepository}:${ImageTag}"
+      ImageUri: 530061243896.dkr.ecr.us-east-1.amazonaws.com/stage/buildxup/backend:latest
       ImageConfig:
         Command: ["dist/module_employee.handler"]
-      Role: !Ref LambdaExecutionRoleArn
+      Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         EmployeeApi:
           Type: Api
@@ -263,32 +216,9 @@ Resources:
             Path: /employees/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: .
-      DockerTag: latest
 
 Outputs:
   ApiUrl:
     Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
-
-  AuthApiUrl:
-    Description: "Auth API URL"
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/auth/"
-
-  TaskApiUrl:
-    Description: "Task API URL"
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/tasks/"
-
-  HealthApiUrl:
-    Description: "Health Check API URL"
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/server/"
-
-  ProjectApiUrl:
-    Description: "Project API URL"
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/projects/"
-
-  EmployeeApiUrl:
-    Description: "Employee API URL"
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/employees/"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.us-east-1.amazonaws.com/dev/"
