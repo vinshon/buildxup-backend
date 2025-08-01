@@ -42,7 +42,7 @@ phases:
       - echo "Preparing Docker image for Lambda..."
       - export IMAGE_TAG=$(date +%s)
       - export ECR_REPO="stage/buildxup/backend"
-      - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO:$IMAGE_TAG"
+      - export IMAGE_URI="530061243896.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO:latest"
 
       - echo "Logging into ECR..."
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 530061243896.dkr.ecr.us-east-1.amazonaws.com
