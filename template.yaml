@@ -131,6 +131,8 @@ Resources:
         AllowMethods: "'*'"
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: NONE
 
   AuthFunction:
     Type: AWS::Serverless::Function
