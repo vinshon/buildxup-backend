@@ -135,7 +135,8 @@ Resources:
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: dist/module_auth.handler
+      CodeUri: .
+      Handler: module_auth/auth.handler
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         AuthApi:
@@ -148,7 +149,8 @@ Resources:
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: dist/module_task.handler
+      CodeUri: .
+      Handler: module_task/task.handler
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         TaskApi:
@@ -161,7 +163,8 @@ Resources:
   HealthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: dist/ping.handler
+      CodeUri: .
+      Handler: ping.handler
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         Ping:
@@ -180,7 +183,8 @@ Resources:
   ProjectFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: dist/module_project.handler
+      CodeUri: .
+      Handler: module_project/project.handler
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         ProjectApi:
@@ -193,7 +197,8 @@ Resources:
   EmployeeFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: dist/module_employee.handler
+      CodeUri: .
+      Handler: module_employee/employee.handler
       Role: arn:aws:iam::530061243896:role/Lambda_Execution_Role
       Events:
         EmployeeApi:
