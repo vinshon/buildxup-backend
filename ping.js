@@ -97,7 +97,7 @@ exports.pingDb = async (event) => {
         'Access-Control-Allow-Credentials': true,
       },
       body: JSON.stringify({
-        message: 'Database',
+        message: 'Database connection successful',
         timestamp: new Date().toISOString()
       })
     };
