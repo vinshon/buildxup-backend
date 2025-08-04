@@ -22,7 +22,7 @@ phases:
       - npm ci --omit=dev
 
       - echo "Generating Prisma client without engines..."
-      - npx prisma generate --no-engine
+      - npx prisma generate
 
       - echo "Removing unnecessary Prisma binaries..."
       - rm -rf node_modules/.prisma/client/libquery_engine*
