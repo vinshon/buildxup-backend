@@ -80,9 +80,9 @@ async function updateTaskImage(taskId, imageId, data) {
 
       if (existingImage && existingImage.image_url) {
         try {
-          // Extract key from URL and delete from S3
-          const urlParts = existingImage.image_url.split('/');
-          const key = urlParts.slice(-1)[0]; // Get the filename
+          // Extract key from URL properly
+          const url = new URL(existingImage.image_url);
+          const key = url.pathname.substring(1); // Remove leading slash
           await s3Service.deleteFile(key);
         } catch (s3Error) {
           console.error('Failed to delete old image from S3:', s3Error);
@@ -95,7 +95,7 @@ async function updateTaskImage(taskId, imageId, data) {
         where: { id: imageId, task_id: taskId, is_deleted: false },
         data: { 
           image_url: data.task_image.location,
-          description: data.description,
+          description: data.description || 'Task Image',
           updated_at: new Date() 
         }
       });
@@ -106,11 +106,15 @@ async function updateTaskImage(taskId, imageId, data) {
     // Regular update without new image
     const updated = await prisma.task_image.updateMany({
       where: { id: imageId, task_id: taskId, is_deleted: false },
-      data: { ...data, updated_at: new Date() }
+      data: { 
+        description: data.description || 'Task Image',
+        updated_at: new Date() 
+      }
     });
     if (updated.count === 0) return responses.notFound('Image not found or already deleted');
     return responses.updated('Task image updated');
   } catch (error) {
+    console.error('Update Task Image Error:', error);
     return responses.internalError('Failed to update task image', error.message);
   }
 }
@@ -127,8 +131,9 @@ async function softDeleteTaskImage(taskId, imageId) {
     // Delete from S3
     if (image.image_url) {
       try {
-        const urlParts = image.image_url.split('/');
-        const key = urlParts.slice(-1)[0]; // Get the filename
+        // Extract key from URL properly
+        const url = new URL(image.image_url);
+        const key = url.pathname.substring(1); // Remove leading slash
         await s3Service.deleteFile(key);
       } catch (s3Error) {
         console.error('Failed to delete image from S3:', s3Error);
@@ -144,6 +149,7 @@ async function softDeleteTaskImage(taskId, imageId) {
     if (deleted.count === 0) return responses.notFound('Image not found or already deleted');
     return responses.deleted('Task image deleted');
   } catch (error) {
+    console.error('Soft Delete Task Image Error:', error);
     return responses.internalError('Failed to delete task image', error.message);
   }
 }
