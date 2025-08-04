@@ -161,6 +161,12 @@ Resources:
             Path: /tasks/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
+        TaskRootApi:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: any
+            RestApiId: !Ref ApiGateway
 
   HealthFunction:
     Type: AWS::Serverless::Function
@@ -195,6 +201,12 @@ Resources:
             Path: /projects/{proxy+}
             Method: any
             RestApiId: !Ref ApiGateway
+        ProjectRootApi:
+          Type: Api
+          Properties:
+            Path: /projects
+            Method: any
+            RestApiId: !Ref ApiGateway
 
   EmployeeFunction:
     Type: AWS::Serverless::Function
@@ -207,6 +219,12 @@ Resources:
           Type: Api
           Properties:
             Path: /employees/{proxy+}
+            Method: any
+            RestApiId: !Ref ApiGateway
+        EmployeeRootApi:
+          Type: Api
+          Properties:
+            Path: /employees
             Method: any
             RestApiId: !Ref ApiGateway
 

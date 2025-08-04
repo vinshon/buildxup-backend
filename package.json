@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "sam build",
-    "start": "npm run build && sam local start-api --port 4000",
+    "start": "nodemon --exec sam local start-api --port 4000",
     "dev": "nodemon index.js",
     "prisma:generate": "prisma generate",
     "prisma:all:generate": "prisma generate",
