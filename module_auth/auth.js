@@ -9,18 +9,7 @@ const trimBody = require('../middleware/trimBody');
 const app = express();
 console.log("process.env.DATABASE_URL from module_auth/handler.js", process.env.DATABASE_URL);
 
-// Handle OPTIONS requests for all paths
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.status(200).json({
-      message: 'OK'
-    });
-    return;
-  }
-  next();
-});
-
-// Middleware
+// Simple CORS configuration
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
