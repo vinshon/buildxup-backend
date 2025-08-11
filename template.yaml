@@ -127,10 +127,6 @@ Resources:
       EndpointConfiguration: REGIONAL
       BinaryMediaTypes:
         - "*/*"
-      Cors:
-        AllowMethods: "'*'"
-        AllowHeaders: "'*'"
-        AllowOrigin: "'*'"
       Auth:
         DefaultAuthorizer: NONE
 

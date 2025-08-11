@@ -57,7 +57,8 @@ exports.handler = async (event) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Credentials': true,
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
         },
         body: JSON.stringify({
           message: 'Server is running successfully',
@@ -94,7 +95,8 @@ exports.pingDb = async (event) => {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
       },
       body: JSON.stringify({
         message: 'Database connection successful',
@@ -109,7 +111,8 @@ exports.pingDb = async (event) => {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
       },
       body: JSON.stringify({
         message: 'Database connection failed',
