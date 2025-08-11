@@ -9,13 +9,6 @@ const trimBody = require('../middleware/trimBody');
 const app = express();
 console.log("process.env.DATABASE_URL from module_auth/handler.js", process.env.DATABASE_URL);
 
-// Handle OPTIONS preflight requests FIRST, before any other middleware
-app.options('*', (req, res) => {
-  res.status(200).json({
-    message: 'OK'
-  });
-});
-
 // Middleware
 app.use(cors({
   origin: '*',
