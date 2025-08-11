@@ -8,6 +8,18 @@ const serverless = require('serverless-http');
 const trimBody = require('./middleware/trimBody')
 const app = express();
 console.log("process.env.DATABASE_URL from index.js", process.env.DATABASE_URL);
+
+// Handle OPTIONS preflight requests first
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.status(200).json({
+      message: 'OK'
+    });
+    return;
+  }
+  next();
+});
+
 // For local development
 if (process.env.NODE_ENV === 'development') {
   const PORT = process.env.PORT || 4000;
@@ -24,7 +36,12 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token'],
+  credentials: false
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -44,6 +44,20 @@ module.exports.time = async (req, res) => {
 // Simple ping handler
 exports.handler = async (event) => {
   try {
+    // Handle OPTIONS preflight requests
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+          'Access-Control-Allow-Methods': 'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
+          'Access-Control-Allow-Credentials': 'true'
+        },
+        body: JSON.stringify({ message: 'OK' })
+      };
+    }
+
     // Check which endpoint was called
     const path = event.path || event.requestContext?.path || '';
     
