@@ -9,24 +9,8 @@ const trimBody = require('../middleware/trimBody');
 
 const app = express();
 
-// Handle OPTIONS requests for all paths
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.status(200).json({
-      message: 'OK'
-    });
-    return;
-  }
-  next();
-});
-
 // Middleware
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token'],
-  credentials: false
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(trimBody);

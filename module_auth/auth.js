@@ -9,13 +9,8 @@ const trimBody = require('../middleware/trimBody');
 const app = express();
 console.log("process.env.DATABASE_URL from module_auth/handler.js", process.env.DATABASE_URL);
 
-// Simple CORS configuration
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token'],
-  credentials: false
-}));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
 // Routes
