@@ -322,8 +322,76 @@ async function verifyLogin({ phone, email, password }) {
   }
 }
 
-async function resetPassword({ email, phone, password }) {
+async function forgotPassword({ email, phone }) {
   try {
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: email ? { email } : { phone }
+    });
+
+    if (!user) {
+      // Return success even if user doesn't exist for security reasons
+      return responses.passwordResetEmailSent();
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Send OTP via email (for now, can be extended to SMS)
+    // if (email) {
+    //   const otpResult = await emailService.sendOTPEmail(email, otp);
+    //   if (!otpResult) {
+    //     return responses.otpSendFailed();
+    //   }
+    // }
+
+    // Store OTP in temp_otp table
+    await prisma.temp_otp.upsert({
+      where: {
+        email: email || undefined,
+        phone: phone || undefined
+      },
+      update: {
+        otp,
+        is_verified: false,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      },
+      create: { 
+        email: email || null, 
+        phone: phone || null, 
+        otp,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      }
+    });
+
+    logger.info(`Password reset OTP sent to ${email || phone}`);
+    return responses.passwordResetEmailSent();
+  } catch (error) {
+    logger.error('Forgot password error:', error);
+    throw error;
+  }
+}
+
+async function resetPassword({ email, phone, otp, password }) {
+  try {
+    // Find the specific OTP record for the user
+    const otpRecord = await prisma.temp_otp.findUnique({
+      where: email ? { email } : { phone }
+    });
+    if (!otpRecord) {
+      return responses.invalidOTP();
+    }
+
+    // Verify the OTP matches
+    if (otpRecord.otp !== otp) {
+      return responses.invalidOTP();
+    }
+
+    // Check if OTP is expired
+    if (new Date() > otpRecord.expiresAt) {
+      return responses.otpExpired();
+    }
+
     // Find the user
     const user = await prisma.user.findUnique({
       where: email ? { email } : { phone }
@@ -336,14 +404,22 @@ async function resetPassword({ email, phone, password }) {
     // Hash new password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update user password
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { 
-        password: hashedPassword,
-        token: null,
-        refresh_token: null
-      }
+    // Update user password and clear OTP record
+    await prisma.$transaction(async (prisma) => {
+      // Update user password
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          password: hashedPassword,
+          token: null,
+          refresh_token: null
+        }
+      });
+
+      // Delete the used OTP record
+      await prisma.temp_otp.delete({
+        where: { id: otpRecord.id }
+      });
     });
 
     logger.info(`Password reset successful for user ${user.email || user.phone}`);
@@ -354,4 +430,4 @@ async function resetPassword({ email, phone, password }) {
   }
 }
 
-module.exports = { signup, verifyOTP, verifyLogin, tempOTP, resetPassword };
+module.exports = { signup, verifyOTP, verifyLogin, tempOTP, forgotPassword, resetPassword };

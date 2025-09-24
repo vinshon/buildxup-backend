@@ -1,5 +1,5 @@
-const { signup, verifyOTP, verifyLogin, tempOTP, resetPassword } = require('../controllers/auth.controller');
-const { validateSignup, validateOTP, validateLogin, validateTempOTP, validateResetPassword } = require('../schemas/auth.schema');
+const { signup, verifyOTP, verifyLogin, tempOTP, forgotPassword, resetPassword } = require('../controllers/auth.controller');
+const { validateSignup, validateOTP, validateLogin, validateTempOTP, validateForgotPassword, validateResetPassword } = require('../schemas/auth.schema');
 const logger = require('../../../utils/logger');
 
 exports.tempOTPHandler = async (req, res) => {
@@ -136,6 +136,36 @@ exports.verifyLoginHandler = async (req, res) => {
   }
 };
 
+exports.forgotPasswordHandler = async (req, res) => {
+  try {
+    const { error } = validateForgotPassword(req.body);
+    if (error) {
+      return res.status(400).json({
+        status_code: 400,
+        status: false,
+        message: 'Validation failed',
+        error: error.details[0].message
+      });
+    }
+
+    const { email, phone } = req.body;
+    const result = await forgotPassword({ email, phone });
+    if (result.status_code === 200) {
+      res.status(200).json(result);
+    } else {
+      res.status(result.status_code).json(result);
+    }
+  } catch (error) {
+    logger.error('Forgot password handler error:', error);
+    res.status(500).json({
+      status_code: 500,
+      status: false,
+      message: 'Failed to process password reset request',
+      error: error.message || 'Internal server error'
+    });
+  }
+};
+
 exports.resetPasswordHandler = async (req, res) => {
   try {
     const { error } = validateResetPassword(req.body);
@@ -148,8 +178,8 @@ exports.resetPasswordHandler = async (req, res) => {
       });
     }
 
-    const { email, phone, password } = req.body;
-    const result = await resetPassword({ email, phone, password });
+    const { email, phone, otp, password } = req.body;
+    const result = await resetPassword({ email, phone, otp, password });
     if (result.status_code === 200) {
       res.status(200).json(result);
     } else {

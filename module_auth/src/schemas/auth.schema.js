@@ -33,9 +33,17 @@ const loginSchema = Joi.object({
   'object.missing': 'Either phone or email is required'
 });
 
+const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().allow(null, ''),
+  phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).allow(null, '')
+}).or('phone', 'email').messages({
+  'object.missing': 'Either phone or email is required'
+});
+
 const resetPasswordSchema = Joi.object({
   email: Joi.string().email().allow(null, ''),
   phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).allow(null, ''),
+  otp: Joi.string().required().length(6),
   password: Joi.string().required().min(6).max(20)
 }).or('phone', 'email').messages({
   'object.missing': 'Either phone or email is required'
@@ -46,5 +54,6 @@ module.exports = {
   validateOTP: (data) => verifyOTPSchema.validate(data),
   validateLogin: (data) => loginSchema.validate(data),
   validateTempOTP: (data) => tempOTPSchema.validate(data),
+  validateForgotPassword: (data) => forgotPasswordSchema.validate(data),
   validateResetPassword: (data) => resetPasswordSchema.validate(data),
 }; 
