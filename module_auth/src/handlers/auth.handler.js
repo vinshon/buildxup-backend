@@ -1,5 +1,5 @@
-const { signup, verifyOTP, verifyLogin, tempOTP } = require('../controllers/auth.controller');
-const { validateSignup, validateOTP, validateLogin, validateTempOTP } = require('../schemas/auth.schema');
+const { signup, verifyOTP, verifyLogin, tempOTP, resetPassword } = require('../controllers/auth.controller');
+const { validateSignup, validateOTP, validateLogin, validateTempOTP, validateResetPassword } = require('../schemas/auth.schema');
 const logger = require('../../../utils/logger');
 
 exports.tempOTPHandler = async (req, res) => {
@@ -132,6 +132,36 @@ exports.verifyLoginHandler = async (req, res) => {
       status: false,
       message: 'Login failed',
       error: error.message || 'Invalid credentials'
+    });
+  }
+};
+
+exports.resetPasswordHandler = async (req, res) => {
+  try {
+    const { error } = validateResetPassword(req.body);
+    if (error) {
+      return res.status(400).json({
+        status_code: 400,
+        status: false,
+        message: 'Validation failed',
+        error: error.details[0].message
+      });
+    }
+
+    const { email, phone, password } = req.body;
+    const result = await resetPassword({ email, phone, password });
+    if (result.status_code === 200) {
+      res.status(200).json(result);
+    } else {
+      res.status(result.status_code).json(result);
+    }
+  } catch (error) {
+    logger.error('Reset password handler error:', error);
+    res.status(500).json({
+      status_code: 500,
+      status: false,
+      message: 'Failed to reset password',
+      error: error.message || 'Internal server error'
     });
   }
 };

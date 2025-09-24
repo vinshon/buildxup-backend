@@ -34,7 +34,7 @@ async function tempOTP({ email, phone }) {
         is_verified: false,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
       },
-      create: { email, phone, otp }
+      create: { email, phone, otp, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) }
     });
 
     return responses.otpSent();
@@ -243,6 +243,11 @@ async function verifyOTP({ phone, email, otp }) {
       return responses.invalidOTP();
     }
 
+    // Check if OTP is expired
+    if (new Date() > user.expiresAt) {
+      return responses.otpExpired();
+    }
+
     await prisma.temp_otp.update({
       where: { email: user.email },
       data: { is_verified: true }
@@ -317,4 +322,36 @@ async function verifyLogin({ phone, email, password }) {
   }
 }
 
-module.exports = { signup, verifyOTP, verifyLogin, tempOTP };
+async function resetPassword({ email, phone, password }) {
+  try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: email ? { email } : { phone }
+    });
+
+    if (!user) {
+      return responses.userNotFound();
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { 
+        password: hashedPassword,
+        token: null,
+        refresh_token: null
+      }
+    });
+
+    logger.info(`Password reset successful for user ${user.email || user.phone}`);
+    return responses.passwordResetSuccessful();
+  } catch (error) {
+    logger.error('Reset password error:', error);
+    throw error;
+  }
+}
+
+module.exports = { signup, verifyOTP, verifyLogin, tempOTP, resetPassword };

@@ -43,6 +43,13 @@ const responses = {
   unverifiedUser: (details = null) => errorResponse('Unverified user', STATUS_CODES.FORBIDDEN, details),
   invalidInput: (details = null) => errorResponse('Invalid input provided', STATUS_CODES.UNPROCESSABLE_ENTITY, details),
   internalError: (message = 'Internal server error', details = null) => errorResponse(message, STATUS_CODES.INTERNAL_SERVER_ERROR, details),
+  
+  // Password Reset Responses
+  passwordResetEmailSent: () => successResponse('Password reset email sent successfully', null, STATUS_CODES.OK),
+  passwordResetSuccessful: () => successResponse('Password reset successfully', null, STATUS_CODES.OK),
+  invalidResetToken: (details = null) => errorResponse('Invalid or expired reset token', STATUS_CODES.BAD_REQUEST, details),
+  resetTokenExpired: (details = null) => errorResponse('Reset token has expired', STATUS_CODES.BAD_REQUEST, details),
+  resetTokenUsed: (details = null) => errorResponse('Reset token has already been used', STATUS_CODES.BAD_REQUEST, details),
 
     // Generic
   created: (message, data = null) => successResponse(message, data, STATUS_CODES.CREATED),
