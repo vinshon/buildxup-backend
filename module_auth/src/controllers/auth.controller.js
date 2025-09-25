@@ -338,12 +338,12 @@ async function forgotPassword({ email, phone }) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Send OTP via email (for now, can be extended to SMS)
-    // if (email) {
-    //   const otpResult = await emailService.sendOTPEmail(email, otp);
-    //   if (!otpResult) {
-    //     return responses.otpSendFailed();
-    //   }
-    // }
+    if (email) {
+      const otpResult = await emailService.sendOTPEmail(email, otp);
+      if (!otpResult) {
+        return responses.otpSendFailed();
+      }
+    }
 
     // Store OTP in temp_otp table
     await prisma.temp_otp.upsert({
